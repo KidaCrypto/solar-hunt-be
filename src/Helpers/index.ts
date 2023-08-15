@@ -88,7 +88,6 @@ export function savePublicKeyToFile(
     }
     data = { ...data, [name]: publicKey.toBase58() };
 
-    console.log(absPath)
     // actually save the data to the file
     fs.writeFileSync(absPath, JSON.stringify(data), {
       encoding: "utf-8",

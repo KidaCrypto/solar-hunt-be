@@ -92,6 +92,7 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
     name,
     symbol,
     uri,
+    whichCollection,
   } = nftMintDetails;
 
   const compressedNFTMetadata: MetadataArgs = {
@@ -120,8 +121,8 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
   // fully mint a single compressed NFT
   console.log(`Minting a single compressed NFT to ${mintTo.toBase58()}...`);
 
-  let treeKeypair = loadOrGenerateKeypair("treeKey");
-  let {collectionMint, collectionMetadataAccount, collectionMasterEditionAccount} = loadPublicKeysFromFile();
+  let treeKeypair = loadOrGenerateKeypair(whichCollection);
+  let { [`${whichCollection}Mint`]: collectionMint, [`${whichCollection}MetadataAccount`]:collectionMetadataAccount, [`${whichCollection}MasterEditionAccount`]:collectionMasterEditionAccount} = loadPublicKeysFromFile();
 
   await mintCompressedNFT(
     connection,

@@ -57,21 +57,25 @@ dotenv.config();
 let initBalance: number, balance: number;
 
 export const initializeTree = async (collectionDetails: CollectionDetails) => {
-  //////////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
 
-  // generate a new Keypair for testing, named `wallet`
-  const testWallet = loadOrGenerateKeypair("testWallet");
+  const {
+      name,
+      symbol,
+      whichCollection,
+      uri,
+      sellerFeeBasisPoints
+  } = collectionDetails;
+
+  //////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////
 
   // generate a new keypair for use in this demo (or load it locally from the filesystem when available)
   const payer = getAdminAccount();
 
   console.log("Payer address:", payer.publicKey.toBase58());
-  console.log("Test wallet address:", testWallet.publicKey.toBase58());
 
   // locally save the addresses for the demo
   savePublicKeyToFile("userAddress", payer.publicKey);
-  savePublicKeyToFile("testWallet", testWallet.publicKey);
 
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -164,7 +168,7 @@ export const initializeTree = async (collectionDetails: CollectionDetails) => {
   */
 
   // define the address the tree will live at
-  const treeKeypair = loadOrGenerateKeypair("treeKey");
+  const treeKeypair = loadOrGenerateKeypair(whichCollection);
 
   // create and send the transaction to create the tree on chain
   const tree = await createTree(connection, payer, treeKeypair, maxDepthSizePair, canopyDepth);
@@ -180,13 +184,6 @@ export const initializeTree = async (collectionDetails: CollectionDetails) => {
     Create the actual NFT collection (using the normal Metaplex method)
     (nothing special about compression here)
   */
-
-  const {
-    name,
-    symbol,
-    uri,
-    sellerFeeBasisPoints
-  } = collectionDetails;
 
   // define the metadata to be used for creating the NFT collection
   const collectionMetadataV3: CreateMetadataAccountArgsV3 = {
@@ -214,9 +211,9 @@ export const initializeTree = async (collectionDetails: CollectionDetails) => {
   const collection = await createCollection(connection, payer, collectionMetadataV3);
 
   // locally save the addresses for the demo
-  savePublicKeyToFile("collectionMint", collection.mint);
-  savePublicKeyToFile("collectionMetadataAccount", collection.metadataAccount);
-  savePublicKeyToFile("collectionMasterEditionAccount", collection.masterEditionAccount);
+  savePublicKeyToFile(`${whichCollection}Mint`, collection.mint);
+  savePublicKeyToFile(`${whichCollection}MetadataAccount`, collection.metadataAccount);
+  savePublicKeyToFile(`${whichCollection}MasterEditionAccount`, collection.masterEditionAccount);
 
   /**
    * INFO: NFT collection != tree
