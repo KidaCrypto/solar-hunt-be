@@ -8,6 +8,7 @@ import DB from './src/DB';
 import { Keypair } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
+import { loadOrGenerateKeypair } from './src/Helpers';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -141,14 +142,8 @@ export const getRPCEndpoint = (): string => {
     return process.env.RPC_ENDPOINT!;
 }
 
-export const getWalletSeed = (): number[] => {
-    return JSON.parse(process.env.WALLET_SEED!);
-}
-
 export const getAdminAccount = (): Keypair => {
-    let seedArray = Uint8Array.from(getWalletSeed());
-    let account = Keypair.fromSeed(seedArray.slice(0, 32));
-    return account;
+    return loadOrGenerateKeypair("Admin");
 }
 
 export const getInsertQuery = (columns: string[], values: any[][], table: string, returnId: boolean = false, schema: string = "public") => {
