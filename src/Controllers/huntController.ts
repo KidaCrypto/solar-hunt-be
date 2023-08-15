@@ -1,13 +1,87 @@
-import { formatDBParamsToStr } from "../../utils";
+import { formatDBParamsToStr, getRandomChance, getRandomNumber } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import * as monsterController from './monsterController';
+import * as lootController from './lootController';
+import * as huntLootController from './huntLootController';
 import { fillableColumns } from '../Models/hunt';
+import { PublicKey } from "@metaplex-foundation/js";
+import { loadKeypairFromFile } from "../Helpers";
+import { mintNft } from "../NFT/Minter";
+import { LOOT_COLLECTION, LOOT_SYMBOL, MONSTER_COLLECTION, MONSTER_SYMBOL } from "../Constants";
 
 const table = 'hunts';
 
+export type InitiateHuntParams = {
+    account: string; // email or public key
+    isPublicKey: boolean;
+}
+
 // init entry for user
-export const init = async() => { }
+export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => { 
+    let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+    let monster = await monsterController.random();
+
+    let shinyRoll = getRandomChance();
+    let isShiny = shinyRoll <= monster.shiny_chance;
+
+    let catchRoll = getRandomChance();
+    let catchChance = isShiny? monster.shiny_catch_rate : monster.catch_rate;
+    let caught = catchRoll <= catchChance;
+
+    let huntStats = {
+        address: publicKey.toBase58(),
+        monster_id: monster.id,
+        caught: false,
+        gold: 0,
+        exp: 0,
+        is_shiny: isShiny,
+    };
+    
+    if(!caught) {
+        await create(huntStats);
+        return 0;
+    }
+
+    huntStats.gold = getRandomNumber(monster.base_gold, monster.max_gold);
+    huntStats.exp = getRandomNumber(monster.base_exp, monster.max_exp);
+
+    // log hunting stats
+    let hunt_id = await create(huntStats);
+
+    // mint monster to address
+    await mintNft({
+        mintTo: publicKey,
+        whichCollection: MONSTER_COLLECTION,
+        name: monster.name,
+        symbol: MONSTER_SYMBOL,
+        uri: "todo",
+    });
+
+    let loots = await lootController.find({'monster_id': monster.id});
+    for(const loot of loots) {
+        let lootRoll = getRandomChance();
+        let shouldMint = lootRoll <= loot.loot_chance;
+        if(!shouldMint) {
+            continue;
+        }
+
+        // log hunting loot
+        await huntLootController.create({ hunt_id, loot_id: loot.id });
+
+        // mint hunting loot to address
+        await mintNft({
+            mintTo: publicKey,
+            whichCollection: LOOT_COLLECTION,
+            name: loot.name,
+            symbol: LOOT_SYMBOL,
+            uri: "todo",
+        });
+    }
+
+    // await mintTokens();
+    return 1;
+}
 
 // create
 export const create = async(insertParams: any): Promise<{[id: string]: number}> => {
@@ -48,7 +122,7 @@ export const find = async(whereParams: {[key: string]: any}): Promise<any[]> => 
         return [];
     }
 
-    for(const [res, index] of result) {
+    for(const [index, res] of result.entries()) {
         result[index].monster =  await monsterController.find({'monster_id': res.monster_id});
     }
 

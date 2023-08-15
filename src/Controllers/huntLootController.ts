@@ -1,11 +1,10 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { Craftable, fillableColumns } from '../Models/craftable';
-import * as craftableSkillController from './craftableSkillController';
-import * as craftableRequirementController from './craftableRequirementController';
+import { HuntLoot, fillableColumns } from '../Models/huntLoot';
+import * as lootController from './lootController';
 
-const table = 'craftables';
+const table = 'hunt_loots';
 
 // init entry for user
 export const init = async() => { }
@@ -35,22 +34,29 @@ export const view = async(id: number): Promise<any> => {
 
     const db = new DB();
     const result = await db.executeQueryForSingleResult(query);
-    const skills = await craftableSkillController.find({'craftable_id': id});
-    const requirements = await craftableRequirementController.find({'craftable_id': id});
-    result.skills = skills;
-    result.requirements = requirements;
+    const loot = await lootController.find({'loot_id': id});
+    result.loot = loot;
     return result ?? {};
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}): Promise<Craftable[]> => {
+export const find = async(whereParams: {[key: string]: any}): Promise<HuntLoot[]> => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults(query);
+    const result = await db.executeQueryForResults<HuntLoot>(query);
 
-    return result as Craftable[] ?? [];
+    if(!result) {
+        return [];
+    }
+
+
+    for(const [index, res] of result.entries()) {
+        result[index].loot =  await lootController.find({'id': res.loot_id});
+    }
+
+    return result as HuntLoot[] ?? [];
 }
 
 // list (all)
@@ -58,15 +64,14 @@ export const list = async(): Promise<any[]> => {
     const query = `SELECT * FROM ${table}`;
 
     const db = new DB();
-    let result = await db.executeQueryForResults<Craftable>(query);
+    let result = await db.executeQueryForResults<HuntLoot>(query);
 
     if(!result) {
         return [];
     }
 
     for(const [index, res] of result.entries()) {
-        result[index].skills =  await craftableSkillController.find({'craftable_id': res.id});
-        result[index].requirements = await craftableRequirementController.find({'craftable_id': res.id});
+        result[index].loot =  await lootController.find({'id': res.loot_id});
     }
 
     return result as any[] ?? [];

@@ -1,12 +1,19 @@
-import { formatDBParamsToStr } from "../../utils";
+import { formatDBParamsToStr, getRandomNumber } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { fillableColumns } from '../Models/monster';
+import { Monster, fillableColumns } from '../Models/monster';
 
 const table = 'monsters';
 
 // init entry for user
-export const init = async() => { }
+export const random = async() => {
+    let allMonsters = await list();
+    if(!allMonsters || !allMonsters.length) {
+        throw Error("No monsters found");
+    }
+    let randomIndex = getRandomNumber(0, allMonsters.length - 1, true);
+    return allMonsters[randomIndex];
+ }
 
 // create
 export const create = async(insertParams: any): Promise<{[id: string]: number}> => {
@@ -48,13 +55,13 @@ export const find = async(whereParams: {[key: string]: any}): Promise<any[]> => 
 }
 
 // list (all)
-export const list = async(): Promise<any[]> => {
+export const list = async(): Promise<Monster[]> => {
     const query = `SELECT * FROM ${table}`;
 
     const db = new DB();
     const result = await db.executeQueryForResults(query);
 
-    return result as any[] ?? [];
+    return result as Monster[] ?? [];
 }
 
 // update

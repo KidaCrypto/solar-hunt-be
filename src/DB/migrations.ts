@@ -51,7 +51,7 @@ export default [
                 gold real not null,
                 exp real not null,
                 is_shiny boolean not null,
-                created_at timestamp not null
+                created_at timestamp not null default current_timestamp
             );`,
         rollback_query: `DROP TABLE hunts;`
     },
@@ -94,8 +94,19 @@ export default [
                 id serial PRIMARY KEY,
                 address text not null,
                 craftable_id int not null,
-                created_at timestamp not null
+                created_at timestamp not null default current_timestamp
             );`,
         rollback_query: `DROP TABLE crafts;`
+    },
+    {
+        name: "create_hunt_loots_table", // history
+        query: `
+            CREATE TABLE hunt_loots (
+                id serial PRIMARY KEY,
+                hunt_id int not null,
+                loot_id int not null,
+                amount int not null
+            );`,
+        rollback_query: `DROP TABLE hunt_loots;`
     },
 ];

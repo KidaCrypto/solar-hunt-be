@@ -146,6 +146,10 @@ export const getAdminAccount = (): Keypair => {
     return loadOrGenerateKeypair("Admin");
 }
 
+export const getPlayerAccount = (email: string) => {
+    return loadOrGenerateKeypair(email);
+}
+
 export const getInsertQuery = (columns: string[], values: any[][], table: string, returnId: boolean = false, schema: string = "public") => {
     let columnString = columns.join(",");
     let valueString = "";

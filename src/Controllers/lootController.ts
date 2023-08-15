@@ -1,7 +1,7 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { fillableColumns } from '../Models/loot';
+import { MonsterLoot, fillableColumns } from '../Models/loot';
 
 const table = 'monster_loots';
 
@@ -10,8 +10,6 @@ export const init = async() => { }
 
 // create
 export const create = async(insertParams: any): Promise<{[id: string]: number}> => {
-    const fillableColumns = [ 'user_id', 'to_chain', 'to_token_symbol', 'to_token_address', 'quick_amount' ];
-
     const filtered = _.pick(insertParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, ', ', true);
 
@@ -28,7 +26,7 @@ export const create = async(insertParams: any): Promise<{[id: string]: number}> 
 
 // view (single - id)
 export const view = async(id: number): Promise<any> => {
-    const query = `SELECT to_chain, to_token_symbol, to_token_address FROM ${table} WHERE id = ${id} LIMIT 1`;
+    const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
     const result = await db.executeQueryForSingleResult(query);
@@ -37,14 +35,14 @@ export const view = async(id: number): Promise<any> => {
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}): Promise<any[]> => {
+export const find = async(whereParams: {[key: string]: any}): Promise<MonsterLoot[]> => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
     const result = await db.executeQueryForResults(query);
 
-    return result as any[] ?? [];
+    return result as MonsterLoot[] ?? [];
 }
 
 // list (all)
