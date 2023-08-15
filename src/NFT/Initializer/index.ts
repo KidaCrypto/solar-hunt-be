@@ -81,7 +81,7 @@ export const initializeTree = async (collectionDetails: CollectionDetails) => {
   //////////////////////////////////////////////////////////////////////////////
 
   // load the env variables and store the cluster RPC url
-  const CLUSTER_URL = getRPCEndpoint() ?? clusterApiUrl("devnet");
+  const CLUSTER_URL = getRPCEndpoint();
 
   // create a new rpc connection, using the ReadApi wrapper
   const connection = new WrapperConnection(CLUSTER_URL, "confirmed");

@@ -5,7 +5,7 @@ dotenv.config({ path: path.join(__dirname, '.env')});
 import axios, { AxiosRequestHeaders, AxiosRequestConfig, AxiosResponse } from "axios";
 import crypto from "crypto";
 import DB from './src/DB';
-import { Keypair } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadOrGenerateKeypair } from './src/Helpers';
@@ -139,7 +139,7 @@ export const getDbConfig = () => {
 }
 
 export const getRPCEndpoint = (): string => {
-    return process.env.RPC_ENDPOINT!;
+    return process.env.RPC_URL? process.env.RPC_URL : clusterApiUrl("devnet");
 }
 
 export const getAdminAccount = (): Keypair => {
@@ -149,6 +149,43 @@ export const getAdminAccount = (): Keypair => {
 export const getPlayerAccount = (email: string) => {
     return loadOrGenerateKeypair(email);
 }
+
+export //get associated token accounts that stores the SPL tokens
+const getTokenAccounts = async(connection: Connection, address: string) => {
+  try {
+    const filters: GetProgramAccountsFilter[] = [
+        {
+          dataSize: 165,    //size of account (bytes), this is a constant
+        },
+        {
+          memcmp: {
+            offset: 32,     //location of our query in the account (bytes)
+            bytes: address,  //our search criteria, a base58 encoded string
+          },            
+        }];
+
+    const accounts = await connection.getParsedProgramAccounts(
+        new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'), //Associated Tokens Program
+        {filters: filters}
+    );
+
+    /* accounts.forEach((account, i) => {
+        //Parse the account data
+        const parsedAccountInfo:any = account.account.data;
+        const mintAddress:string = parsedAccountInfo["parsed"]["info"]["mint"];
+        const tokenBalance: number = parsedAccountInfo["parsed"]["info"]["tokenAmount"]["uiAmount"];
+        //Log results
+        console.log(`Token Account No. ${i + 1}: ${account.pubkey.toString()}`);
+        console.log(`--Token Mint: ${mintAddress}`);
+        console.log(`--Token Balance: ${tokenBalance}`);
+    }); */
+    return accounts;
+  }
+
+  catch {
+    return [];
+  }
+};
 
 export const getInsertQuery = (columns: string[], values: any[][], table: string, returnId: boolean = false, schema: string = "public") => {
     let columnString = columns.join(",");

@@ -9,6 +9,7 @@ import { PublicKey } from "@metaplex-foundation/js";
 import { loadKeypairFromFile } from "../Helpers";
 import { mintNft } from "../NFT/Minter";
 import { LOOT_COLLECTION, LOOT_SYMBOL, MONSTER_COLLECTION, MONSTER_SYMBOL } from "../Constants";
+import { mintTo } from "../Token";
 
 const table = 'hunts';
 
@@ -40,7 +41,7 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
     
     if(!caught) {
         await create(huntStats);
-        return 0;
+        return "Failed to catch!";
     }
 
     huntStats.gold = getRandomNumber(monster.base_gold, monster.max_gold);
@@ -50,7 +51,7 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
     let hunt_id = await create(huntStats);
 
     // mint monster to address
-    await mintNft({
+    mintNft({
         mintTo: publicKey,
         whichCollection: MONSTER_COLLECTION,
         name: monster.name,
@@ -70,7 +71,7 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
         await huntLootController.create({ hunt_id, loot_id: loot.id });
 
         // mint hunting loot to address
-        await mintNft({
+        mintNft({
             mintTo: publicKey,
             whichCollection: LOOT_COLLECTION,
             name: loot.name,
@@ -79,8 +80,10 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
         });
     }
 
-    // await mintTokens();
-    return 1;
+    // not sure if this will be executed thoroughly or not
+    mintTo(publicKey, "gold", huntStats.gold);
+    mintTo(publicKey, "exp", huntStats.exp);
+    return "Caught";
 }
 
 // create

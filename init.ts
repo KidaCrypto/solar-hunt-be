@@ -1,5 +1,7 @@
 import { CRAFTABLE_COLLECTION, CRAFTABLE_SYMBOL, LOOT_COLLECTION, LOOT_SYMBOL, MONSTER_COLLECTION, MONSTER_SYMBOL } from "./src/Constants";
+import { loadOrGenerateKeypair } from "./src/Helpers";
 import { initializeTree } from "./src/NFT/Initializer";
+import { initializeToken, mintTo } from "./src/Token";
 
 (async() => {
     await initializeTree({
@@ -23,4 +25,6 @@ import { initializeTree } from "./src/NFT/Initializer";
         uri: "https://solarhunt.kidas.app/lootTree.json",
         sellerFeeBasisPoints: 0,
     });
+    await initializeToken("gold");
+    await initializeToken("exp");
 })();
