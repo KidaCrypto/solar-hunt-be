@@ -20,11 +20,16 @@ routes.post('/find', async (req, res) => {
     return res.json(await controller.find(req.body));
 });
 
-// create
+// new hunt
 routes.post('/', async(req, res) => {
     let data = req.body;
+
+    if(!data.isPublicKey || !data.account) {
+        return res.status(400).send({ success: false, message: "Missing params" });
+    }
+
     try {
-        const result = await controller.create(data);
+        const result = await controller.newHunt(data);
         return res.json({ success: true, data: result });
     }
 
