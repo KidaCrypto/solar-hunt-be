@@ -6,9 +6,9 @@ export const routes = Router();
 
 
 // list
-routes.get('/', async (req, res) => {
-    return res.json(await controller.list());
-});
+// routes.get('/', async (req, res) => {
+//     return res.json(await controller.list());
+// });
 
 // get
 routes.get('/:id', async (req, res) => {
@@ -24,7 +24,7 @@ routes.get('/:id', async (req, res) => {
 routes.post('/', async(req, res) => {
     let data = req.body;
 
-    if(!data.isPublicKey || !data.account) {
+    if(data.isPublicKey === null || data.isPublicKey === undefined || !data.account) {
         return res.status(400).send({ success: false, message: "Missing params" });
     }
 
@@ -43,7 +43,7 @@ routes.post('/', async(req, res) => {
 routes.post('/history', async(req, res) => {
     let data = req.body;
 
-    if(!data.isPublicKey || !data.account) {
+    if(data.isPublicKey === null || data.isPublicKey === undefined || !data.account) {
         return res.status(400).send({ success: false, message: "Missing params" });
     }
 

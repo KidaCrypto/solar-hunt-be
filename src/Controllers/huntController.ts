@@ -39,19 +39,17 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
     let huntStats = {
         address: publicKey.toBase58(),
         monster_id: monster.id,
-        caught: false,
-        gold: 0,
-        exp: 0,
+        caught,
+        gold: getRandomNumber(monster.base_gold, monster.max_gold),
+        exp: getRandomNumber(monster.base_exp, monster.max_exp),
         is_shiny: isShiny,
     };
-    
+
     if(!caught) {
+        console.log('failed to catch monster');
         await create(huntStats);
         return "Failed to catch!";
     }
-
-    huntStats.gold = getRandomNumber(monster.base_gold, monster.max_gold);
-    huntStats.exp = getRandomNumber(monster.base_exp, monster.max_exp);
 
     // log hunting stats
     let hunt_id = await create(huntStats);
@@ -95,6 +93,7 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
 
 // create
 export const create = async(insertParams: any): Promise<{[id: string]: number}> => {
+    console.log(insertParams);
     const filtered = _.pick(insertParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, ', ', true);
 
@@ -122,7 +121,7 @@ export const view = async(id: number): Promise<any> => {
 
 export const getHistoryForAccount = async({ isPublicKey, account, whereParams }: FindHistoryParams) => {
     let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
-    let result = await find({ address: publicKey });
+    let result = await find({ address: publicKey.toBase58() });
     return result ?? []
 }
 
@@ -139,7 +138,7 @@ export const find = async(whereParams: { [key: string]: any }): Promise<Hunt[]> 
     }
 
     for(const [index, res] of result.entries()) {
-        result[index].monster =  (await monsterController.find({'monster_id': res.monster_id}))[0];
+        result[index].monster =  (await monsterController.find({ id: res.monster_id }))[0];
         result[index].hunt_loots =  await huntLootController.find({ hunt_id: res.id });
     }
 

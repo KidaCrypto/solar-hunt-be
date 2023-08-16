@@ -104,19 +104,8 @@ const createNewMintToInstruction = async (destinationWallet: PublicKey, whichTok
     // console.log(`---STEP 1: Get Associated Address---`);
     //get associated token account of your wallet
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
-    let shouldCreateNewATA = true;   
-
-    let userAccounts = await getTokenAccounts(connection, destinationWallet.toString());
-    for(let account of userAccounts) {
-      let anyAccount = account.account as any;
-      let mint: string = anyAccount.data["parsed"]["info"]["mint"];
-    //   let accountAmount: number = anyAccount.data["parsed"]["info"]["tokenAmount"]["uiAmount"];
-
-      if(mint === mintKeypair.publicKey.toBase58()) {
-        shouldCreateNewATA = false;
-        break;
-      }
-    }
+    const mintObject = await getUserTokens(destinationWallet);
+    let shouldCreateNewATA = !Object.keys(mintObject).includes(mintKeypair.publicKey.toBase58()); 
     
     // console.log({ shouldCreateNewATA });
     // console.log(tokenATA.toBase58());
@@ -159,6 +148,23 @@ export const initializeToken = async(whichToken: "gold" | "exp") => {
     // console.log(`View Token Mint: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
 }
 
+export const getTokenPublicKey = (whichToken: "gold" | "exp") => {
+    return loadOrGenerateKeypair(whichToken).publicKey.toBase58();
+}
+
+export const getUserTokens = async(destinationWallet: PublicKey) => {
+    let mintObject: {[mintAddress: string]: number} = {};
+    let userAccounts = await getTokenAccounts(connection, destinationWallet.toString());
+    for(let account of userAccounts) {
+      let anyAccount = account.account as any;
+      let mint: string = anyAccount.data["parsed"]["info"]["mint"];
+      let accountAmount: number = anyAccount.data["parsed"]["info"]["tokenAmount"]["uiAmount"];
+
+      mintObject[mint] = accountAmount;
+    }
+
+    return mintObject;
+}
 
 export const mintTo = async(destinationWallet: PublicKey, whichToken: "gold" | "exp", amount: number) => {
     const newMintTransaction:Transaction = await createNewMintToInstruction(destinationWallet, whichToken, amount);
