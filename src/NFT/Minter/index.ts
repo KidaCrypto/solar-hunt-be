@@ -119,7 +119,7 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
   };
 
   // fully mint a single compressed NFT
-  console.log(`Minting a single compressed NFT to ${mintTo.toBase58()}...`);
+  // console.log(`Minting a single compressed NFT to ${mintTo.toBase58()}...`);
 
   let treeKeypair = loadOrGenerateKeypair(whichCollection);
   let { [`${whichCollection}Mint`]: collectionMint, [`${whichCollection}MetadataAccount`]:collectionMetadataAccount, [`${whichCollection}MasterEditionAccount`]:collectionMasterEditionAccount} = loadPublicKeysFromFile();
@@ -133,19 +133,20 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
     new PublicKey(collectionMasterEditionAccount),
     compressedNFTMetadata,
     // mint to this specific wallet (in this case, airdrop to `testWallet`)
-    new PublicKey(mintTo),
+    mintTo,
   );
 
+  console.log(`Minted Compressed NFT to ${mintTo.toBase58()}`);
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
   // fetch the payer's final balance
-  balance = await connection.getBalance(payer.publicKey);
+  // balance = await connection.getBalance(payer.publicKey);
 
-  console.log(`===============================`);
-  console.log(
-    "Total cost:",
-    numberFormatter((initBalance - balance) / LAMPORTS_PER_SOL, true),
-    "SOL\n",
-  );
+  // console.log(`===============================`);
+  // console.log(
+  //   "Total cost:",
+  //   numberFormatter((initBalance - balance) / LAMPORTS_PER_SOL, true),
+  //   "SOL\n",
+  // );
 }

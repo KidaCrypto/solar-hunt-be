@@ -307,8 +307,8 @@ import {
      */
     const computedDataHash = new PublicKey(computeDataHash(metadataArgs)).toBase58();
     const computedCreatorHash = new PublicKey(computeCreatorHash(metadataArgs.creators)).toBase58();
-    console.log("computedDataHash:", computedDataHash);
-    console.log("computedCreatorHash:", computedCreatorHash);
+    // console.log("computedDataHash:", computedDataHash);
+    // console.log("computedCreatorHash:", computedCreatorHash);
   
     /*
       Add a single mint to collection instruction 
@@ -368,8 +368,8 @@ import {
         skipPreflight: true,
       });
   
-      console.log("\nSuccessfully minted the compressed NFT!");
-      console.log(explorerURL({ txSignature }));
+      // console.log("\nSuccessfully minted the compressed NFT!");
+      // console.log(explorerURL({ txSignature }));
   
       return txSignature;
     } catch (err) {

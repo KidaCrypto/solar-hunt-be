@@ -1,3 +1,6 @@
+import { HuntLoot } from "./huntLoot";
+import { Monster } from "./monster";
+
 export type Hunt = {
     id: number;
     address: string;
@@ -7,6 +10,9 @@ export type Hunt = {
     exp: number;
     is_shiny: boolean;
     created_at: string;
+
+    monster: Monster;
+    hunt_loots: HuntLoot[];
 }
 
 export const fillableColumns = [
@@ -16,5 +22,4 @@ export const fillableColumns = [
     'gold',
     'exp',
     'is_shiny',
-    'created_at',
 ];

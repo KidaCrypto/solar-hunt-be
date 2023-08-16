@@ -16,9 +16,9 @@ routes.get('/:id', async (req, res) => {
 });
 
 // find
-routes.post('/find', async (req, res) => {
-    return res.json(await controller.find(req.body));
-});
+// routes.post('/find', async (req, res) => {
+//     return res.json(await controller.find(req.body));
+// });
 
 // new hunt
 routes.post('/', async(req, res) => {
@@ -30,6 +30,25 @@ routes.post('/', async(req, res) => {
 
     try {
         const result = await controller.newHunt(data);
+        return res.json({ success: true, data: result });
+    }
+
+    catch {
+        return res.status(500).send({ success: false, message: "die die die" });
+    }
+
+});
+
+// hunt history
+routes.post('/history', async(req, res) => {
+    let data = req.body;
+
+    if(!data.isPublicKey || !data.account) {
+        return res.status(400).send({ success: false, message: "Missing params" });
+    }
+
+    try {
+        const result = await controller.getHistoryForAccount(data);
         return res.json({ success: true, data: result });
     }
 

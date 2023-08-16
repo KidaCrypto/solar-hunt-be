@@ -101,7 +101,7 @@ const createNewMintToInstruction = async (destinationWallet: PublicKey, whichTok
     const mintKeypair = loadOrGenerateKeypair(whichToken);
     const decimals = whichToken === "gold"? GOLD_TOKEN_DECIMALS : EXP_TOKEN_DECIMALS;
     
-    console.log(`---STEP 1: Get Associated Address---`);
+    // console.log(`---STEP 1: Get Associated Address---`);
     //get associated token account of your wallet
     const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
     let shouldCreateNewATA = true;   
@@ -118,8 +118,8 @@ const createNewMintToInstruction = async (destinationWallet: PublicKey, whichTok
       }
     }
     
-    console.log({ shouldCreateNewATA });
-    console.log(tokenATA.toBase58());
+    // console.log({ shouldCreateNewATA });
+    // console.log(tokenATA.toBase58());
 
     const mintNewTokenInstruction = new Transaction();
     if(shouldCreateNewATA) {
@@ -154,23 +154,24 @@ export const initializeToken = async(whichToken: "gold" | "exp") => {
     newMintTransaction.lastValidBlockHeight = lastValidBlockHeight;
     newMintTransaction.feePayer = account.publicKey;
     const transactionId = await sendAndConfirmTransaction(connection,newMintTransaction,[account,mintKeypair]); 
-    console.log(`Transaction ID: `, transactionId);
-    console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
-    console.log(`View Token Mint: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
+    // console.log(`Transaction ID: `, transactionId);
+    // console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
+    // console.log(`View Token Mint: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
 }
 
 
 export const mintTo = async(destinationWallet: PublicKey, whichToken: "gold" | "exp", amount: number) => {
     const newMintTransaction:Transaction = await createNewMintToInstruction(destinationWallet, whichToken, amount);
-    const mintKeypair = loadOrGenerateKeypair(whichToken);
+    // const mintKeypair = loadOrGenerateKeypair(whichToken);
 
-    console.log(`---STEP 2: Executing Mint Transaction---`);
+    // console.log(`---STEP 2: Executing Mint Transaction---`);
     let { lastValidBlockHeight, blockhash } = await connection.getLatestBlockhash('finalized');
     newMintTransaction.recentBlockhash = blockhash;
     newMintTransaction.lastValidBlockHeight = lastValidBlockHeight;
     newMintTransaction.feePayer = account.publicKey;
     const transactionId = await sendAndConfirmTransaction(connection,newMintTransaction,[account]); 
-    console.log(`Transaction ID: `, transactionId);
-    console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
-    console.log(`View Token Mint: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
+    console.log(`Completed Mint: ${amount} ` + whichToken);
+    // console.log(`Transaction ID: `, transactionId);
+    // console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
+    // console.log(`View Token Mint: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
 }

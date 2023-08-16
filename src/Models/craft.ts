@@ -8,5 +8,4 @@ export type Craft = {
 export const fillableColumns = [
     'address',
     'craftable_id',
-    'created_at',
 ];

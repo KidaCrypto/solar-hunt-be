@@ -72,7 +72,7 @@ export const initializeTree = async (collectionDetails: CollectionDetails) => {
   // generate a new keypair for use in this demo (or load it locally from the filesystem when available)
   const payer = getAdminAccount();
 
-  console.log("Payer address:", payer.publicKey.toBase58());
+  // console.log("Payer address:", payer.publicKey.toBase58());
 
   // locally save the addresses for the demo
   savePublicKeyToFile("userAddress", payer.publicKey);

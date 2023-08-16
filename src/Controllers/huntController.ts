@@ -4,7 +4,7 @@ import _ from "lodash";
 import * as monsterController from './monsterController';
 import * as lootController from './lootController';
 import * as huntLootController from './huntLootController';
-import { fillableColumns } from '../Models/hunt';
+import { Hunt, fillableColumns } from '../Models/hunt';
 import { PublicKey } from "@metaplex-foundation/js";
 import { loadKeypairFromFile } from "../Helpers";
 import { mintNft } from "../NFT/Minter";
@@ -16,6 +16,12 @@ const table = 'hunts';
 export type InitiateHuntParams = {
     account: string; // email or public key
     isPublicKey: boolean;
+}
+
+export type FindHistoryParams = {
+    account: string; // email or public key
+    isPublicKey: boolean;
+    whereParams: { [key: string]: any };
 }
 
 // init entry for user
@@ -50,6 +56,7 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
     // log hunting stats
     let hunt_id = await create(huntStats);
 
+    console.log('new monster caught');
     // mint monster to address
     mintNft({
         mintTo: publicKey,
@@ -113,23 +120,30 @@ export const view = async(id: number): Promise<any> => {
     return result ?? {};
 }
 
+export const getHistoryForAccount = async({ isPublicKey, account, whereParams }: FindHistoryParams) => {
+    let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+    let result = await find({ address: publicKey });
+    return result ?? []
+}
+
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}): Promise<any[]> => {
+export const find = async(whereParams: { [key: string]: any }): Promise<Hunt[]> => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
-    const query = `SELECT * FROM ${table} WHERE ${params}`;
+    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY id desc`;
 
     const db = new DB();
-    let result = await db.executeQueryForResults(query);
+    let result = await db.executeQueryForResults<Hunt>(query);
 
     if(!result) {
         return [];
     }
 
     for(const [index, res] of result.entries()) {
-        result[index].monster =  await monsterController.find({'monster_id': res.monster_id});
+        result[index].monster =  (await monsterController.find({'monster_id': res.monster_id}))[0];
+        result[index].hunt_loots =  await huntLootController.find({ hunt_id: res.id });
     }
 
-    return result as any[] ?? [];
+    return result ?? [];
 }
 
 // list (all)

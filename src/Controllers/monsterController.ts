@@ -44,24 +44,24 @@ export const view = async(id: number): Promise<any> => {
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}): Promise<any[]> => {
+export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults(query);
+    const result = await db.executeQueryForResults<Monster>(query);
 
-    return result as any[] ?? [];
+    return result ?? [];
 }
 
 // list (all)
-export const list = async(): Promise<Monster[]> => {
+export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults(query);
+    const result = await db.executeQueryForResults<Monster>(query);
 
-    return result as Monster[] ?? [];
+    return result ?? [];
 }
 
 // update
