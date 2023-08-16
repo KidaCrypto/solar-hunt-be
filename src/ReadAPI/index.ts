@@ -6,6 +6,7 @@ import { PROGRAM_ID as BUBBLEGUM_PROGRAM_ID } from "@metaplex-foundation/mpl-bub
 
 // import from the `@metaplex-foundation/js`
 import { MetaplexError, toBigNumber, Pda, amount } from "@metaplex-foundation/js";
+import fetch from 'node-fetch';
 import type { SplTokenCurrency, Metadata, Mint, NftOriginalEdition } from "@metaplex-foundation/js";
 
 // local imports for the ReadApi types
@@ -152,7 +153,7 @@ export class WrapperConnection extends Connection {
       }),
     });
 
-    return await response.json();
+    return await response.json() as any;
   };
 
   // Asset id can be calculated via Bubblegum#getLeafAssetId
