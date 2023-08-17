@@ -126,7 +126,7 @@ const createNewMintToInstruction = async (destinationWallet: PublicKey, whichTok
           mintKeypair.publicKey, //Mint
           tokenATA, //Destination Token Account
           account.publicKey, //Authority
-          amount * Math.pow(10, decimals),//number of tokens
+          Math.round(amount * Math.pow(10, decimals)),//number of tokens
         ),
     );
 

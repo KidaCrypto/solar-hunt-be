@@ -109,4 +109,19 @@ export default [
             );`,
         rollback_query: `DROP TABLE hunt_loots;`
     },
+    {
+        name: "create_nft_metadata_table",
+        query: `
+            CREATE TABLE nft_metadata (
+                id serial PRIMARY KEY,
+                uuid text not null,
+                metadata text not null
+            );`,
+        rollback_query: `DROP TABLE nft_metadata;`
+    },
+    {
+        name: "create_nft_metadata_index",
+        query: `CREATE INDEX nft_id_index ON nft_metadata (uuid)`,
+        rollback_query: `DROP INDEX nft_id_index;`
+    }
 ];

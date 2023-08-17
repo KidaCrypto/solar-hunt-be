@@ -22,7 +22,7 @@ const MIN_SHINY_CATCHRATE = 10;
 const MAX_SHINY_CATCHRATE = 30;
 
 //skills
-const MIN_LOOT_CHANCE = 80;
+const MIN_LOOT_CHANCE = 50;
 const MAX_LOOT_CHANCE = 100;
 const MIN_SKILL_VALUE = 0.01;
 const MAX_SKILL_VALUE = 1;
@@ -118,13 +118,24 @@ export const seedMonsterLoots = async() => {
 
     for(let i = 0; i < nEffects; i++) {
         let skillName = effectFile.file_names[i].name;
-        let lootChance = getRandomNumber(MIN_LOOT_CHANCE, MAX_LOOT_CHANCE, true);
 
-        let monsterId = getRandomNumber(1, nMonsters, true);
-        let iconFileIndex = getRandomNumber(0, skillIconsFile.file_names.length - 1, true);
-        let iconFile = skillIconsFile.file_names[iconFileIndex];
+        let monsterIds: number[] = [];
+        for(let j = 0; j < 10; j++) {
+            //push to 10 monsters
+            let lootChance = getRandomNumber(MIN_LOOT_CHANCE, MAX_LOOT_CHANCE, true);
+    
+            let monsterId = getRandomNumber(1, nMonsters, true);
 
-        values.push([skillName, iconFile, monsterId, lootChance]);
+            if(monsterIds.includes(monsterId)) {
+                continue;
+            }
+
+            let iconFileIndex = getRandomNumber(0, skillIconsFile.file_names.length - 1, true);
+            let iconFile = skillIconsFile.file_names[iconFileIndex];
+    
+            values.push([skillName, iconFile, monsterId, lootChance]);
+            monsterIds.push(monsterId);
+        }
     }
 
     let query = getInsertQuery(columns, values, table);

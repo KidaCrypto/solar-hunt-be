@@ -1,15 +1,17 @@
-import { formatDBParamsToStr, getRandomChance, getRandomNumber } from "../../utils";
+import { formatDBParamsToStr, generateLootImageUrl, generateMonsterImageUrl, generateNftUri, getDappDomain, getRandomChance, getRandomNumber } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import * as monsterController from './monsterController';
 import * as lootController from './lootController';
 import * as huntLootController from './huntLootController';
+import * as nftMetadataController from './nftMetadataController';
 import { Hunt, fillableColumns } from '../Models/hunt';
 import { PublicKey } from "@metaplex-foundation/js";
 import { loadKeypairFromFile } from "../Helpers";
 import { mintNft } from "../NFT/Minter";
 import { LOOT_COLLECTION, LOOT_SYMBOL, MONSTER_COLLECTION, MONSTER_SYMBOL } from "../Constants";
 import { mintTo } from "../Token";
+import { MetaplexStandard } from "../NFT/Minter/types";
 
 const table = 'hunts';
 
@@ -52,28 +54,56 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
     }
 
     // log hunting stats
-    let hunt_id = await create(huntStats);
+    let hunt = await create(huntStats);
+    let { uuid: monsterUuid, uri: monsterUri } = generateNftUri();
 
-    console.log('new monster caught');
     // mint monster to address
     mintNft({
         mintTo: publicKey,
         whichCollection: MONSTER_COLLECTION,
         name: monster.name,
         symbol: MONSTER_SYMBOL,
-        uri: "todo",
+        uri: monsterUri,
     });
 
+    let monsterMetadata: MetaplexStandard = {
+        name: monster.name,
+        symbol: MONSTER_SYMBOL,
+        description: (isShiny? "Shiny " : "") + "Monster caught by " + publicKey.toBase58(),
+        image: generateMonsterImageUrl(monster.img_file, "base", false, isShiny),
+        attributes: [
+            {
+                trait_type: "shiny",
+                value: isShiny? "Yes" : "No"
+            },
+            {
+                trait_type: "type",
+                value: "monster"
+            },
+        ]
+    };
+
+    let insertMonsterMetadataParams = {
+        uuid: monsterUuid,
+        metadata: JSON.stringify(monsterMetadata),
+    }
+
+    await nftMetadataController.create(insertMonsterMetadataParams);
+    
     let loots = await lootController.find({'monster_id': monster.id});
+
     for(const loot of loots) {
         let lootRoll = getRandomChance();
         let shouldMint = lootRoll <= loot.loot_chance;
         if(!shouldMint) {
+            console.log('failed to drop');
             continue;
         }
 
+        console.log('monster dropped ' + loot.name);
         // log hunting loot
-        await huntLootController.create({ hunt_id, loot_id: loot.id });
+        await huntLootController.create({ hunt_id: hunt.id, loot_id: loot.id, amount: 1 });
+        let { uuid: lootUuid, uri: lootUri } = generateNftUri();
 
         // mint hunting loot to address
         mintNft({
@@ -81,8 +111,32 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
             whichCollection: LOOT_COLLECTION,
             name: loot.name,
             symbol: LOOT_SYMBOL,
-            uri: "todo",
+            uri: lootUri,
         });
+
+        let lootMetadata: MetaplexStandard = {
+            name: loot.name,
+            symbol: LOOT_SYMBOL,
+            description: "Dropped by " + monster.name,
+            image: generateLootImageUrl(loot.img_file),
+            attributes: [
+                {
+                    trait_type: "shiny",
+                    value: isShiny? "Yes" : "No"
+                },
+                {
+                    trait_type: "type",
+                    value: "loot"
+                },
+            ]
+        };
+    
+        let insertLootMetadataParams = {
+            uuid: lootUuid,
+            metadata: JSON.stringify(lootMetadata),
+        }
+    
+        await nftMetadataController.create(insertLootMetadataParams);
     }
 
     // not sure if this will be executed thoroughly or not

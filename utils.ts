@@ -9,6 +9,7 @@ import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, clusterApiUrl
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadOrGenerateKeypair } from './src/Helpers';
+import { v4 as uuidv4 } from 'uuid'; 
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -399,4 +400,29 @@ export const getPeriod = (period: 'monthly' | 'weekly' | 'daily') => {
  */
 export const getServerPort = () => {
     return process.env.SERVER_PORT;
+}
+/**
+ * Get server port from env
+ * @param { string } url
+ */
+export const getDappDomain = () => {
+    return process.env.DAPP_DOMAIN;
+}
+
+export const generateNftUri = () => {
+    let uuid = uuidv4();
+    let uri = getDappDomain() + `/metadata/${uuid}.json`;
+    return { uuid, uri };
+}
+
+export const generateMonsterImageUrl = (imgFile: string, color: "base" | "blue" | "green" | "gray" | "red", isIcon?: boolean, isShiny?: boolean) => {
+    return getDappDomain() + `/assets/sprites/${isIcon? "icon_" : ""}${color}${isShiny? "_shiny" : ""}/${imgFile}`;
+}
+
+export const generateLootImageUrl = (imgFile: string) => {
+    return getDappDomain() + `/assets/skills/${imgFile}`;
+}
+
+export const generateCraftableImageUrl = (imgFile: string) => {
+    return getDappDomain() + `/assets/skills/${imgFile}`;
 }
