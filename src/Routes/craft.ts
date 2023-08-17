@@ -6,32 +6,64 @@ export const routes = Router();
 
 
 // list
-routes.get('/', async (req, res) => {
-    return res.json(await controller.list());
-});
+// routes.get('/', async (req, res) => {
+//     return res.json(await controller.list());
+// });
 
 // get
-routes.get('/:id', async (req, res) => {
-    return res.json(await controller.view(parseInt(req.params.id)));
-});
+// routes.get('/:id', async (req, res) => {
+//     return res.json(await controller.view(parseInt(req.params.id)));
+// });
 
 // find
-routes.post('/find', async (req, res) => {
-    return res.json(await controller.find(req.body));
-});
+// routes.post('/find', async (req, res) => {
+//     return res.json(await controller.find(req.body));
+// });
 
 // create
-routes.post('/', async(req, res) => {
+routes.post('/pre', async(req, res) => {
     let data = req.body;
     try {
-        const result = await controller.create(data);
+        if(!data.craftable_id || !data.nft_ids || data.isPublicKey === undefined || data.isPublicKey === null || !data.account) {
+            return res.status(400).send({ success: false, message: "die die die" });
+        }
+        const result = await controller.preCraft(data);
         return res.json({ success: true, data: result });
     }
 
     catch {
         return res.status(500).send({ success: false, message: "die die die" });
     }
+});
 
+routes.post('/', async(req, res) => {
+    let data = req.body;
+    try {
+        if(!data.uuid) {
+            return res.status(400).send({ success: false, message: "die die die" });
+        }
+        const result = await controller.newCraft(data);
+        return res.json({ success: true, data: result });
+    }
+
+    catch {
+        return res.status(500).send({ success: false, message: "die die die" });
+    }
+});
+
+routes.post('/error', async(req, res) => {
+    let data = req.body;
+    try {
+        if(!data.uuid) {
+            return res.status(400).send({ success: false, message: "die die die" });
+        }
+        const result = await controller.errorCraft(data);
+        return res.json({ success: true, data: result });
+    }
+
+    catch {
+        return res.status(500).send({ success: false, message: "die die die" });
+    }
 });
 
 // update

@@ -123,5 +123,22 @@ export default [
         name: "create_nft_metadata_index",
         query: `CREATE INDEX nft_id_index ON nft_metadata (uuid)`,
         rollback_query: `DROP INDEX nft_id_index;`
-    }
+    },
+    {
+        name: "create_crafting_uuids_table",
+        query: `
+            CREATE TABLE crafting_uuids (
+                id serial PRIMARY KEY,
+                uuid text not null,
+                craftable_id int not null,
+                address text not null,
+                nft_id text not null
+            );`,
+        rollback_query: `DROP TABLE crafting_uuids;`
+    },
+    {
+        name: "create_crafting_uuids_index",
+        query: `CREATE INDEX crafting_uuids_index ON crafting_uuids (uuid)`,
+        rollback_query: `DROP INDEX crafting_uuids_index;`
+    },
 ];

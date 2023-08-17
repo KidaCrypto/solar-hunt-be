@@ -27,34 +27,48 @@ export const create = async(insertParams: any): Promise<{[id: string]: number}> 
 }
 
 // view (single - id)
-export const view = async(id: number): Promise<any> => {
+export const view = async(id: number) => {
     const query = `
         SELECT ${fillableColumns.join(",")} 
         FROM ${table} 
         WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult(query);
+    const result = await db.executeQueryForSingleResult<Craftable>(query);
+
+    if(!result) {
+        return undefined;
+    }
+
     const skills = await craftableSkillController.find({'craftable_id': id});
     const requirements = await craftableRequirementController.find({'craftable_id': id});
     result.skills = skills;
     result.requirements = requirements;
-    return result ?? {};
+    return result;
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}): Promise<Craftable[]> => {
+export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults(query);
+    let result = await db.executeQueryForResults<Craftable>(query);
 
-    return result as Craftable[] ?? [];
+    if(!result) {
+        return [];
+    }
+
+    for(const [index, res] of result.entries()) {
+        result[index].skills =  await craftableSkillController.find({'craftable_id': res.id});
+        result[index].requirements = await craftableRequirementController.find({'craftable_id': res.id});
+    }
+
+    return result;
 }
 
 // list (all)
-export const list = async(): Promise<any[]> => {
+export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
     const db = new DB();
@@ -69,7 +83,7 @@ export const list = async(): Promise<any[]> => {
         result[index].requirements = await craftableRequirementController.find({'craftable_id': res.id});
     }
 
-    return result as any[] ?? [];
+    return result ?? [];
 }
 
 // update

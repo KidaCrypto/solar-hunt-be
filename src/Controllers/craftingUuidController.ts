@@ -1,10 +1,9 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import * as lootController from './lootController';
-import { CraftableRequirement, fillableColumns } from "../Models/craftableRequirement";
+import { CraftingUuid, fillableColumns } from "../Models/craftingUuid";
 
-const table = 'craftable_requirements';
+const table = 'crafting_uuids';
 
 // init entry for user
 export const init = async() => { }
@@ -30,14 +29,9 @@ export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult<CraftableRequirement>(query);
+    const result = await db.executeQueryForSingleResult<CraftingUuid>(query);
 
-    if(!result) {
-        return undefined;
-    }
-
-    result.loot = await lootController.find({ id: result.loot_id });
-    return result;
+    return result ?? {};
 }
 
 // find (all match)
@@ -46,15 +40,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults(query);
+    const result = await db.executeQueryForResults<CraftingUuid>(query);
 
-    if(!result) {
-        return [];
-    }
-
-    for(const [index, res] of result.entries()) {
-        result[index].loot = await lootController.find({ id: res.loot_id });
-    }
     return result ?? [];
 }
 
@@ -63,15 +50,8 @@ export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
     const db = new DB();
-    let result = await db.executeQueryForResults<CraftableRequirement>(query);
+    const result = await db.executeQueryForResults<CraftingUuid>(query);
 
-    if(!result) {
-        return [];
-    }
-
-    for(const [index, res] of result.entries()) {
-        result[index].loot = await lootController.find({ id: res.loot_id });
-    }
     return result ?? [];
 }
 
@@ -87,12 +67,11 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
     await db.executeQueryForSingleResult(query);
 }
 
-// delete (soft delete?)
-// export const delete = async(userId: number) => {
-//     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
+export const deleteAll = async(uuid: string) => {
+    const query = `DELETE FROM ${table} WHERE uuid = ${uuid}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+    const db = new DB();
+    await db.executeQuery(query);
 
-//     return result;
-// }
+    return 1;
+}

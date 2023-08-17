@@ -1,4 +1,4 @@
-import { formatDBParamsToStr, generateLootImageUrl, generateMonsterImageUrl, generateNftUri, getDappDomain, getRandomChance, getRandomNumber } from "../../utils";
+import { formatDBParamsToStr, generateLootImageUrl, generateMonsterImageUrl, generateNftUri, getDappDomain, getPlayerPublicKey, getRandomChance, getRandomNumber } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import * as monsterController from './monsterController';
@@ -29,7 +29,7 @@ export type FindHistoryParams = {
 
 // init entry for user
 export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => { 
-    let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+    let publicKey = getPlayerPublicKey(isPublicKey, account);
 
     let lastHunts = await find({'address' : publicKey.toBase58()});
 
@@ -177,7 +177,7 @@ export const view = async(id: number): Promise<any> => {
 }
 
 export const getHistoryForAccount = async({ isPublicKey, account, whereParams }: FindHistoryParams) => {
-    let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+    let publicKey =  getPlayerPublicKey(isPublicKey, account);
     let result = await find({ address: publicKey.toBase58() });
     return result ?? []
 }

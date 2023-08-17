@@ -11,6 +11,11 @@ import _ from 'lodash';
 import { loadKeypairFromFile, loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
 import { v4 as uuidv4 } from 'uuid'; 
 import { CRAFTABLE_COLLECTION, LOOT_COLLECTION, MONSTER_COLLECTION } from './src/Constants';
+import { ReadApiAsset } from '@metaplex-foundation/js';
+import * as nftMetadataController from './src/Controllers/nftMetadataController';
+import { MetaplexStandard } from './src/NFT/Minter/types';
+import { WrapperConnection } from './src/ReadAPI';
+import { OnchainNFTDetails } from './src/Routes/onchain.d';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -447,4 +452,69 @@ export const getLootCollectionAddress = () => {
 
 export const getCraftableCollectionAddress = () => {
     return getCollectionMint(CRAFTABLE_COLLECTION).collectionMint.toString();
+}
+
+export const getPlayerPublicKey = (isPublicKey: boolean, account: string) => {
+    return isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+}
+
+export const getNftDetails = async(rawDetails: ReadApiAsset[]) => {
+    let ret = [];
+    for(const [key, raw] of Object.entries(rawDetails)) {
+        // invalid uri
+        if(!raw.content.json_uri.includes("/metadata/")) {
+            continue;
+        }
+
+        let exploded = raw.content.json_uri.split("/");
+
+        // invalid uri
+        if(exploded.length === 0) {
+            continue;
+        }
+
+        let jsonFile = exploded[exploded.length - 1];
+        let uuid = jsonFile.replace(".json", "");
+
+        let metadataStrings = await nftMetadataController.find({ uuid });
+        if(metadataStrings.length === 0) {
+            continue;
+        }
+
+        let metadata = JSON.parse(metadataStrings[0].metadata) as MetaplexStandard;
+
+        let types = metadata.attributes.filter(x => x.trait_type === "type");
+
+        // invalid metadata
+        if(types.length === 0) {
+            continue;
+        }
+        
+        ret.push({
+            raw,
+            metadata
+        });
+    };
+    return ret;
+}
+
+export const getAddressNftDetails = async(isPublicKey: boolean, account: string) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+    let publicKey = getPlayerPublicKey(isPublicKey, account);
+    const result = await connection.getAssetsByOwner({ ownerAddress: publicKey.toBase58() });
+
+    let rawMonsters = result.items.filter(x => x.grouping[0].group_value === getMonsterCollectionAddress());
+    let rawLoots = result.items.filter(x => x.grouping[0].group_value === getLootCollectionAddress());
+    let rawCraftables = result.items.filter(x => x.grouping[0].group_value === getCraftableCollectionAddress());
+
+    let ret: { [key: string]: OnchainNFTDetails[] } = {};
+    ret.monster = await getNftDetails(rawMonsters);
+    ret.loot = await getNftDetails(rawLoots);
+    ret.craftable = await getNftDetails(rawCraftables);
+
+    return ret;
 }
