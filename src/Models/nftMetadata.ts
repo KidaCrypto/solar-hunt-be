@@ -1,4 +1,4 @@
-export type Monster = {
+export type NftMetadata = {
     id: number;
     uuid: string;
     metadata: string;

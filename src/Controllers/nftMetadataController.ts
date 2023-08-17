@@ -1,7 +1,7 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { fillableColumns } from "../Models/nftMetadata";
+import { NftMetadata, fillableColumns } from "../Models/nftMetadata";
 
 const table = 'nft_metadata';
 
@@ -35,14 +35,14 @@ export const view = async(id: number): Promise<any> => {
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}): Promise<any[]> => {
+export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults(query);
+    const result = await db.executeQueryForResults<NftMetadata>(query);
 
-    return result as any[] ?? [];
+    return result ?? [];
 }
 
 // list (all)
