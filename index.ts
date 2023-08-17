@@ -8,6 +8,8 @@ import dotenv from 'dotenv';
 import { getServerPort } from './utils';
 import { routes as huntRoutes } from './src/Routes/hunt';
 import { routes as onchainRoutes } from './src/Routes/onchain';
+import { routes as craftRoutes } from './src/Routes/craft';
+import { routes as craftableRoutes } from './src/Routes/craftable';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
 process.on('uncaughtException', function (err) {
@@ -30,6 +32,8 @@ app.use(cors({
 
 app.use('/hunt', huntRoutes);
 app.use('/onchain', onchainRoutes);
+app.use('/craft', craftRoutes);
+app.use('/craftable', craftableRoutes);
 
 //connect app to websocket
 let http = createServer(app);
