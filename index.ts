@@ -7,6 +7,7 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { getServerPort } from './utils';
 import { routes as huntRoutes } from './src/Routes/hunt';
+import { routes as onchainRoutes } from './src/Routes/onchain';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
 process.on('uncaughtException', function (err) {
@@ -19,13 +20,16 @@ const port = getServerPort();
 const whitelists = JSON.parse(process.env.CORS_WHITELIST!);
 
 let app = express();
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors({
     origin: whitelists,
     credentials: true
 }));
+
 app.use('/hunt', huntRoutes);
+app.use('/onchain', onchainRoutes);
 
 //connect app to websocket
 let http = createServer(app);
