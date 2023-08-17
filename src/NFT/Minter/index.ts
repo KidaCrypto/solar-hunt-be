@@ -50,7 +50,7 @@ import { mintCompressedNFT } from "../../Compression";
 import { WrapperConnection } from "../../ReadAPI";
 
 import dotenv from "dotenv";
-import { getAdminAccount, getRPCEndpoint } from "../../../utils";
+import { getAdminAccount, getCollectionMint, getRPCEndpoint } from "../../../utils";
 import { NftMintDetails } from "./types";
 dotenv.config();
 
@@ -122,8 +122,8 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
   // console.log(`Minting a single compressed NFT to ${mintTo.toBase58()}...`);
 
   let treeKeypair = loadOrGenerateKeypair(whichCollection);
-  let { [`${whichCollection}Mint`]: collectionMint, [`${whichCollection}MetadataAccount`]:collectionMetadataAccount, [`${whichCollection}MasterEditionAccount`]:collectionMasterEditionAccount} = loadPublicKeysFromFile();
-
+  let { collectionMint, collectionMasterEditionAccount, collectionMetadataAccount } = getCollectionMint(whichCollection);
+  
   await mintCompressedNFT(
     connection,
     payer,

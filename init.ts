@@ -8,21 +8,21 @@ import { initializeToken, mintTo } from "./src/Token";
         name: "Solar Hunt Monsters",
         symbol: MONSTER_SYMBOL,
         whichCollection: MONSTER_COLLECTION,
-        uri: "https://solarhunt.kidas.app/monsterTree.json",
+        uri: "https://solar-hunt.kidas.app/metadata/monsterTree.json",
         sellerFeeBasisPoints: 0,
     });
     await initializeTree({
         name: "Solar Hunt Craftables",
         symbol: CRAFTABLE_SYMBOL,
         whichCollection: CRAFTABLE_COLLECTION,
-        uri: "https://solarhunt.kidas.app/craftableTree.json",
+        uri: "https://solar-hunt.kidas.app/metadata/craftableTree.json",
         sellerFeeBasisPoints: 0,
     });
     await initializeTree({
         name: "Solar Hunt Loots",
         symbol: LOOT_SYMBOL,
         whichCollection: LOOT_COLLECTION,
-        uri: "https://solarhunt.kidas.app/lootTree.json",
+        uri: "https://solar-hunt.kidas.app/metadata/lootTree.json",
         sellerFeeBasisPoints: 0,
     });
     await initializeToken("gold");

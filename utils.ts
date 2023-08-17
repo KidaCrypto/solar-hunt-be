@@ -8,8 +8,9 @@ import DB from './src/DB';
 import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, clusterApiUrl } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
-import { loadOrGenerateKeypair } from './src/Helpers';
+import { loadKeypairFromFile, loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
 import { v4 as uuidv4 } from 'uuid'; 
+import { CRAFTABLE_COLLECTION, LOOT_COLLECTION, MONSTER_COLLECTION } from './src/Constants';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -427,18 +428,23 @@ export const generateCraftableImageUrl = (imgFile: string) => {
     return getDappDomain() + `/assets/skills/${imgFile}`;
 }
 
-export const getCollectionAddress = () => {
-    return process.env.GENERAL_COLLECTION_MINT_ADDRESS;
+export const getCollectionMint = (whichCollection: string) => {
+  let { [`${whichCollection}Mint`]: collectionMint, [`${whichCollection}MetadataAccount`]:collectionMetadataAccount, [`${whichCollection}MasterEditionAccount`]:collectionMasterEditionAccount} = loadPublicKeysFromFile();
+  return {
+    collectionMasterEditionAccount,
+    collectionMetadataAccount,
+    collectionMint,
+  };
 }
 
 export const getMonsterCollectionAddress = () => {
-    return process.env.MONSTER_COLLECTION_MINT_ADDRESS;
+    return getCollectionMint(MONSTER_COLLECTION).collectionMint.toString();
 }
 
 export const getLootCollectionAddress = () => {
-    return process.env.LOOT_COLLECTION_MINT_ADDRESS;
+    return getCollectionMint(LOOT_COLLECTION).collectionMint.toString();
 }
 
 export const getCraftableCollectionAddress = () => {
-    return process.env.CRAFTABLE_COLLECTION_MINT_ADDRESS;
+    return getCollectionMint(CRAFTABLE_COLLECTION).collectionMint.toString();
 }

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getCollectionAddress, getCraftableCollectionAddress, getLootCollectionAddress, getMonsterCollectionAddress, getRPCEndpoint } from '../../utils';
+import { getCraftableCollectionAddress, getLootCollectionAddress, getMonsterCollectionAddress, getRPCEndpoint } from '../../utils';
 import { WrapperConnection } from '../ReadAPI';
 import { PublicKey } from '@solana/web3.js';
 import { loadKeypairFromFile } from '../Helpers';
@@ -7,6 +7,7 @@ import { getTokenPublicKey, getUserTokens } from '../Token';
 import { OnchainNFTDetails } from './onchain.d';
 import * as nftMetadataController from '../Controllers/nftMetadataController';
 import { MetaplexStandard } from '../NFT/Minter/types';
+import { ReadApiAsset } from '@metaplex-foundation/js';
 
 export const routes = Router();
 
@@ -48,29 +49,9 @@ routes.post('/tokens', async(req, res) => {
 
 // nft assets in account
 routes.post('/nfts', async(req, res) => {
-    let data = req.body;
-
-    if(data.isPublicKey === null || data.isPublicKey === undefined || !data.account) {
-        return res.status(400).send({ success: false, message: "Missing params" });
-    }
-
-    try {
-        // load the env variables and store the cluster RPC url
-        const CLUSTER_URL = getRPCEndpoint();
-    
-        // create a new rpc connection, using the ReadApi wrapper
-        const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
-        let { isPublicKey, account } = data;
-        let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
-        const result = await connection.getAssetsByOwner({ ownerAddress: publicKey.toBase58() });
-
-        let rawSolarNfts = result.items.filter(x => x.grouping[0].group_value === getCollectionAddress());
-        // let rawLoots = result.items.filter(x => x.grouping[0].group_value === getLootCollectionAddress());
-        // let rawCraftables = result.items.filter(x => x.grouping[0].group_value === getCraftableCollectionAddress());
-
-        let ret: { [key: string]: OnchainNFTDetails[] } = {};
-
-        for(const [key, raw] of Object.entries(rawSolarNfts)) {
+    const getNftDetails = async(rawDetails: ReadApiAsset[]) => {
+        let ret = [];
+        for(const [key, raw] of Object.entries(rawDetails)) {
             // invalid uri
             if(!raw.content.json_uri.includes("/metadata/")) {
                 continue;
@@ -92,7 +73,7 @@ routes.post('/nfts', async(req, res) => {
             }
 
             let metadata = JSON.parse(metadataStrings[0].metadata) as MetaplexStandard;
-            console.log(metadata)
+
             let types = metadata.attributes.filter(x => x.trait_type === "type");
 
             // invalid metadata
@@ -100,24 +81,42 @@ routes.post('/nfts', async(req, res) => {
                 continue;
             }
             
-            let type = types[0].value;
-            if(!ret[type]) {
-                ret[type] = [];
-            }
-
-            ret[type].push({
+            ret.push({
                 raw,
                 metadata
             });
         };
+        return ret;
+    }
+    let data = req.body;
 
-        console.log('leaving')
-        console.log(ret);
+    if(data.isPublicKey === null || data.isPublicKey === undefined || !data.account) {
+        return res.status(400).send({ success: false, message: "Missing params" });
+    }
+
+    try {
+        // load the env variables and store the cluster RPC url
+        const CLUSTER_URL = getRPCEndpoint();
+    
+        // create a new rpc connection, using the ReadApi wrapper
+        const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+        let { isPublicKey, account } = data;
+        let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+        const result = await connection.getAssetsByOwner({ ownerAddress: publicKey.toBase58() });
+
+        let rawMonsters = result.items.filter(x => x.grouping[0].group_value === getMonsterCollectionAddress());
+        let rawLoots = result.items.filter(x => x.grouping[0].group_value === getLootCollectionAddress());
+        let rawCraftables = result.items.filter(x => x.grouping[0].group_value === getCraftableCollectionAddress());
+
+        let ret: { [key: string]: OnchainNFTDetails[] } = {};
+        ret.monster = await getNftDetails(rawMonsters);
+        ret.loot = await getNftDetails(rawLoots);
+        ret.craftable = await getNftDetails(rawCraftables);
 
         return res.json({ success: true, data: ret });
     }
 
-    catch {
+    catch (e){
         return res.status(500).send({ success: false, message: "die die die" });
     }
 });

@@ -12,6 +12,7 @@ import { mintNft } from "../NFT/Minter";
 import { LOOT_COLLECTION, LOOT_SYMBOL, MONSTER_COLLECTION, MONSTER_SYMBOL } from "../Constants";
 import { mintTo } from "../Token";
 import { MetaplexStandard } from "../NFT/Minter/types";
+import moment from 'moment';
 
 const table = 'hunts';
 
@@ -29,6 +30,13 @@ export type FindHistoryParams = {
 // init entry for user
 export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => { 
     let publicKey = isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+
+    let lastHunts = await find({'address' : publicKey.toBase58()});
+
+    if(lastHunts && lastHunts.length > 1 && moment().diff(lastHunts[0].created_at, 's') < 60) {
+        return "On CD";
+    }
+
     let monster = await monsterController.random();
 
     let shinyRoll = getRandomChance();
@@ -100,7 +108,6 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
             continue;
         }
 
-        console.log('monster dropped ' + loot.name);
         // log hunting loot
         await huntLootController.create({ hunt_id: hunt.id, loot_id: loot.id, amount: 1 });
         let { uuid: lootUuid, uri: lootUri } = generateNftUri();
@@ -120,10 +127,6 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
             description: "Dropped by " + monster.name,
             image: generateLootImageUrl(loot.img_file),
             attributes: [
-                {
-                    trait_type: "shiny",
-                    value: isShiny? "Yes" : "No"
-                },
                 {
                     trait_type: "type",
                     value: "loot"
