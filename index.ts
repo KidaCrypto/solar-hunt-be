@@ -10,6 +10,7 @@ import { routes as huntRoutes } from './src/Routes/hunt';
 import { routes as onchainRoutes } from './src/Routes/onchain';
 import { routes as craftRoutes } from './src/Routes/craft';
 import { routes as craftableRoutes } from './src/Routes/craftable';
+import { routes as metadataRoutes } from './src/Routes/metadata';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
 process.on('uncaughtException', function (err) {
@@ -34,6 +35,7 @@ app.use('/hunt', huntRoutes);
 app.use('/onchain', onchainRoutes);
 app.use('/craft', craftRoutes);
 app.use('/craftable', craftableRoutes);
+app.use('/metadata', metadataRoutes);
 
 //connect app to websocket
 let http = createServer(app);
