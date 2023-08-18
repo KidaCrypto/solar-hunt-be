@@ -185,7 +185,7 @@ export const getHistoryForAccount = async({ isPublicKey, account, whereParams }:
 // find (all match)
 export const find = async(whereParams: { [key: string]: any }): Promise<Hunt[]> => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
-    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY id desc`;
+    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY id desc limit 20`;
 
     const db = new DB();
     let result = await db.executeQueryForResults<Hunt>(query);
