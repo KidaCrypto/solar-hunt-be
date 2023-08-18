@@ -11,6 +11,7 @@ import { PublicKey } from "@metaplex-foundation/js";
 import { mintNft } from "../NFT/Minter";
 import { CRAFTABLE_COLLECTION, CRAFTABLE_SYMBOL } from "../Constants";
 import { MetaplexStandard } from "../NFT/Minter/types";
+import { createTransferCompressedNftInstruction } from "../NFT/Transfer";
 
 export type PreCraftParams = {
     craftable_id: number;
@@ -33,7 +34,7 @@ export const preCraft = async({craftable_id, nft_ids, account, isPublicKey}: Pre
         return "Error: Missing NFT Ids";
     }
     // check materials needed
-    let craftables = await craftableController.find({ craftable_id });
+    let craftables = await craftableController.find({ id: craftable_id });
     if(craftables.length === 0) {
         return "Error: Unable to find craftable";
     }
@@ -59,16 +60,18 @@ export const preCraft = async({craftable_id, nft_ids, account, isPublicKey}: Pre
     });
 
     // if materials and nft ids belongs to the public key
-    let address = await getPlayerPublicKey(isPublicKey, account);
+    let address = getPlayerPublicKey(isPublicKey, account);
     let addressNftDetails = await getAddressNftDetails(isPublicKey, account);
+
     for(const [index, id] of nft_ids.entries()) {
         let loot = addressNftDetails.loot.filter(x => x.raw.id === id);
         if(loot.length === 0) {
             return "Error: Address do not posses nft";
         }
+
         let lootName = loot[0].metadata.name;
 
-        if(!requirements[lootName]) {
+        if(!requirements[lootName] && requirements[lootName] !== 0) {
             return "Error: Loot not required";
         }
 
@@ -89,8 +92,15 @@ export const preCraft = async({craftable_id, nft_ids, account, isPublicKey}: Pre
     // verified at this stage
     // create uuid and insert multiple columns regarding the nft ids
     let uuid = uuidv4();
-    await craftingUuidController.create({ uuid, craftable_id, address , nft_id: JSON.stringify(nft_ids) });
-    return uuid;
+    await craftingUuidController.create({ uuid, craftable_id, address: address.toBase58() , nft_id: JSON.stringify(nft_ids) });
+    
+    let adminPublicKey = getAdminAccount().publicKey;
+    let txParams = await Promise.all(
+        nft_ids.map(id => createTransferCompressedNftInstruction(adminPublicKey, new PublicKey(id)))
+    );
+    
+    // let tx = new Transaction().add(...txs);
+    return {uuid, adminPublicKey: adminPublicKey.toBase58(), txParams};
 }
 
 export const newCraft = async({ uuid }: NewCraftParams) => {
@@ -117,6 +127,7 @@ export const newCraft = async({ uuid }: NewCraftParams) => {
 
     let adminPublicKey = getAdminAccount().publicKey.toBase58();
 
+    // if use shift, check if burned
     for(const [index, asset] of res.entries()) {
         if(asset.ownership.owner !== adminPublicKey) {
             return "Error: Loot not transferred to the designated address";

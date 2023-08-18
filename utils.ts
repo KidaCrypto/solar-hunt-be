@@ -16,6 +16,7 @@ import * as nftMetadataController from './src/Controllers/nftMetadataController'
 import { MetaplexStandard } from './src/NFT/Minter/types';
 import { WrapperConnection } from './src/ReadAPI';
 import { OnchainNFTDetails } from './src/Routes/onchain.d';
+import { base58 } from 'ethers/lib/utils';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -149,7 +150,11 @@ export const getRPCEndpoint = (): string => {
     return process.env.RPC_URL? process.env.RPC_URL : clusterApiUrl("devnet");
 }
 
-export const getAdminAccount = (): Keypair => {
+export const getAdminAccount = () => {
+    return Keypair.fromSecretKey(base58.decode(process.env.SECRET_KEY!));
+}
+
+export const _getAdminAccount = (): Keypair => {
     return loadOrGenerateKeypair("Admin");
 }
 
@@ -299,7 +304,7 @@ export const formatDBParamsToStr = (params : {
 }, separator : string = ', ', valueOnly : boolean = false, prepend: string = "") => {
     let stringParams: string[] = [];
     _.map(params, (p, k) => {
-        const value = typeof p === 'string' ? `'${p}'` : p;
+        const value = typeof p === 'string' ? `'${p.replace(/'/g, '')}'` : p;
 
         if (valueOnly) {
             stringParams.push(`${prepend? prepend + "." : ""}${value}`);

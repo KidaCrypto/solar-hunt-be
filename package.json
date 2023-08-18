@@ -13,7 +13,8 @@
     "seed": "tsc && node seed.js",
     "rollback": "tsc && node rollback.js",
     "rollback:seed": "tsc && node rollback.js && node migrate.js && node seed.js",
-    "dev": "nodemon --ext \"ts\" --exec \"tsc && node index.js\"  --exclude node_modules . || exit 1"
+    "dev": "nodemon --ext \"ts\" --exec \"tsc && node index.js\"  --exclude node_modules . || exit 1",
+    "init": "tsc && node init.js"
   },
   "author": "Kida",
   "license": "ISC",

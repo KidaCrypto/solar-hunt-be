@@ -65,7 +65,7 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
 
   // generate a new keypair for use in this demo (or load it locally from the filesystem when available)
   const payer = getAdminAccount();
-  console.log("Payer address:", payer.publicKey.toBase58());
+  // console.log("Payer address:", payer.publicKey.toBase58());
 
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -81,11 +81,11 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
 
   // get the payer's starting balance
   initBalance = await connection.getBalance(payer.publicKey);
-  console.log(
+  /* console.log(
     "Starting account balance:",
     numberFormatter(initBalance / LAMPORTS_PER_SOL),
     "SOL\n",
-  );
+  ); */
 
   const {
     mintTo,
@@ -136,7 +136,9 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
     mintTo,
   );
 
-  console.log(`Minted Compressed NFT to ${mintTo.toBase58()}`);
+  console.log('Minted: ' + name);
+
+  // console.log(`Minted Compressed NFT to ${mintTo.toBase58()}`);
   //////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 

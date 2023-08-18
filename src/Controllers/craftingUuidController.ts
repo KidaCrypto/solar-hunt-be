@@ -68,7 +68,7 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 }
 
 export const deleteAll = async(uuid: string) => {
-    const query = `DELETE FROM ${table} WHERE uuid = ${uuid}`;
+    const query = `DELETE FROM ${table} WHERE uuid = '${uuid}'`;
 
     const db = new DB();
     await db.executeQuery(query);

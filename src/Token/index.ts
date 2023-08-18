@@ -2,7 +2,7 @@ import { Transaction, SystemProgram, Keypair, Connection, PublicKey, sendAndConf
 import { MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMintInstruction, getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createMintToInstruction } from '@solana/spl-token';
 import { DataV2, createCreateMetadataAccountV3Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { bundlrStorage, keypairIdentity, Metaplex, UploadMetadataInput } from '@metaplex-foundation/js';
-import { getAdminAccount, getRPCEndpoint, getTokenAccounts } from "../../utils";
+import { getAdminAccount, getDappDomain, getRPCEndpoint, getTokenAccounts } from "../../utils";
 import { loadOrGenerateKeypair } from "../Helpers";
 import { EXP_TOKEN, EXP_TOKEN_DECIMALS, EXP_TOKEN_SYMBOL, GOLD_TOKEN, GOLD_TOKEN_DECIMALS, GOLD_TOKEN_SYMBOL } from "../Constants";
 
@@ -46,13 +46,13 @@ const createNewMintTransaction = async ( whichToken: "gold" | "exp" ) => {
         name: whichToken === "gold"? GOLD_TOKEN : EXP_TOKEN,
         symbol: whichToken === "gold"? GOLD_TOKEN_SYMBOL : EXP_TOKEN_SYMBOL,
         description: whichToken === "gold"? "Solar Hunt Gold" : "Solar Hunt Experience",
-        image: "https://URL_TO_YOUR_IMAGE.png" //add public URL to image you'd like to use, todo
+        image: getDappDomain() + `/assets/image/${whichToken === "gold"? GOLD_TOKEN_SYMBOL : EXP_TOKEN_SYMBOL}.png` //add public URL to image you'd like to use, todo
     }
 
     let ON_CHAIN_METADATA = {
         name: MY_TOKEN_METADATA.name, 
         symbol: MY_TOKEN_METADATA.symbol,
-        uri: 'TO_UPDATE_LATER',
+        uri: getDappDomain() + `/metadata/${MY_TOKEN_METADATA.symbol}.json` ,
         sellerFeeBasisPoints: 0,
         creators: null,
         collection: null,
@@ -176,7 +176,7 @@ export const mintTo = async(destinationWallet: PublicKey, whichToken: "gold" | "
     newMintTransaction.lastValidBlockHeight = lastValidBlockHeight;
     newMintTransaction.feePayer = account.publicKey;
     const transactionId = await sendAndConfirmTransaction(connection,newMintTransaction,[account]); 
-    console.log(`Completed Mint: ${amount} ` + whichToken);
+    // console.log(`Completed Mint: ${amount} ` + whichToken);
     // console.log(`Transaction ID: `, transactionId);
     // console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
     // console.log(`View Token Mint: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)

@@ -28,12 +28,13 @@ export type FindHistoryParams = {
 }
 
 // init entry for user
+const COOLDOWN = 60;
 export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => { 
     let publicKey = getPlayerPublicKey(isPublicKey, account);
 
     let lastHunts = await find({'address' : publicKey.toBase58()});
 
-    if(lastHunts && lastHunts.length > 1 && moment().diff(lastHunts[0].created_at, 's') < 60) {
+    if(lastHunts && lastHunts.length > 1 && moment().diff(lastHunts[0].created_at, 's') < COOLDOWN) {
         return "On CD";
     }
 
@@ -150,7 +151,6 @@ export const newHunt = async({ account, isPublicKey }: InitiateHuntParams) => {
 
 // create
 export const create = async(insertParams: any): Promise<{[id: string]: number}> => {
-    console.log(insertParams);
     const filtered = _.pick(insertParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, ', ', true);
 
