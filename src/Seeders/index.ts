@@ -116,22 +116,28 @@ export const seedMonsterLoots = async() => {
     let nEffects = Math.floor(effectFile.file_names.length / 2); // we only use half of the effects as craftables
     let nMonsters = monsterFile.file_names.length;
 
+    let iconFileIndexes: number[] = [];
+
     for(let i = 0; i < nEffects; i++) {
         let skillName = effectFile.file_names[i].name;
+        let iconFileIndex = -1;
+
+        // dont use same icon file twice
+        do {
+            iconFileIndex = getRandomNumber(0, skillIconsFile.file_names.length - 1, true)
+        } while(iconFileIndexes.includes(iconFileIndex));
+
+        let iconFile = skillIconsFile.file_names[iconFileIndex];
 
         let monsterIds: number[] = [];
         for(let j = 0; j < 10; j++) {
             //push to 10 monsters
             let lootChance = getRandomNumber(MIN_LOOT_CHANCE, MAX_LOOT_CHANCE, true);
-    
             let monsterId = getRandomNumber(1, nMonsters, true);
 
             if(monsterIds.includes(monsterId)) {
                 continue;
             }
-
-            let iconFileIndex = getRandomNumber(0, skillIconsFile.file_names.length - 1, true);
-            let iconFile = skillIconsFile.file_names[iconFileIndex];
     
             values.push([skillName, iconFile, monsterId, lootChance]);
             monsterIds.push(monsterId);
