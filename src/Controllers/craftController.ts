@@ -26,8 +26,8 @@ export type NewCraftParams = {
 
 const table = 'crafts';
 
-// 0.001 SOL
-const MIN_BALANCE = 0.001;
+// min balance for wallet to make sure transfer 
+const MIN_BALANCE = 0.0003;
 
 // init entry for user
 export const init = async() => { }
