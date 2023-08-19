@@ -66,19 +66,20 @@ routes.post('/nfts', async(req, res) => {
     }
 });
 
-// nft assets in account
-routes.post('/getTokenMetadata', async(req, res) => {
+// return the public key
+routes.post('/publicKey', async(req, res) => {
     let data = req.body;
 
-    if(!data.tokenIds) {
+    if(!data.account) {
         return res.status(400).send({ success: false, message: "Missing params" });
     }
 
     try {
-        return res.json({ success: true, data: [] });
+        return res.json({ success: true, data: getPlayerPublicKey(false, data.account).toBase58() });
     }
 
     catch {
         return res.status(500).send({ success: false, message: "die die die" });
     }
+
 });

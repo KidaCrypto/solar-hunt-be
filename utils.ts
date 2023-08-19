@@ -8,7 +8,7 @@ import DB from './src/DB';
 import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
-import { loadKeypairFromFile, loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
+import { loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
 import { v4 as uuidv4 } from 'uuid'; 
 import { CRAFTABLE_COLLECTION, LOOT_COLLECTION, MONSTER_COLLECTION } from './src/Constants';
 import { ReadApiAsset } from '@metaplex-foundation/js';
@@ -460,7 +460,7 @@ export const getCraftableCollectionAddress = () => {
 }
 
 export const getPlayerPublicKey = (isPublicKey: boolean, account: string) => {
-    return isPublicKey? new PublicKey(account) : loadKeypairFromFile(account).publicKey;
+    return isPublicKey? new PublicKey(account) : loadOrGenerateKeypair(account).publicKey;
 }
 
 export const getNftDetails = async(rawDetails: ReadApiAsset[]) => {
@@ -557,6 +557,6 @@ export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: nu
     // Send and confirm transaction
     // Note: feePayer is by default the first signer, or payer, if the parameter is not set
     let txSignature = await connection.sendTransaction(transaction, [adminAccount]);
-    console.log(txSignature);
+
     return txSignature;
 }

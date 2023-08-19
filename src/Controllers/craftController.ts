@@ -1,4 +1,4 @@
-import { formatDBParamsToStr, generateCraftableImageUrl, generateNftUri, getAddressNftDetails, getAddressSOLBalance, getAdminAccount, getPlayerPublicKey, getRPCEndpoint, sendSOLTo } from "../../utils";
+import { formatDBParamsToStr, generateCraftableImageUrl, generateNftUri, getAddressNftDetails, getAddressSOLBalance, getAdminAccount, getPlayerPublicKey, getRPCEndpoint, sendSOLTo, sleep } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import * as craftableController from './craftableController';
@@ -12,6 +12,9 @@ import { mintNft } from "../NFT/Minter";
 import { CRAFTABLE_COLLECTION, CRAFTABLE_SYMBOL } from "../Constants";
 import { MetaplexStandard } from "../NFT/Minter/types";
 import { createTransferCompressedNftInstruction } from "../NFT/Transfer";
+import { Transaction } from "@solana/web3.js";
+import axios from 'axios';
+import { Buffer } from 'buffer';
 
 export type PreCraftParams = {
     craftable_id: number;
@@ -92,20 +95,65 @@ export const preCraft = async({craftable_id, nft_ids, account, isPublicKey}: Pre
     // create uuid and insert multiple columns regarding the nft ids
     let uuid = uuidv4();
     await craftingUuidController.create({ uuid, craftable_id, address: address.toBase58() , nft_id: JSON.stringify(nft_ids) });
-    
-    let adminPublicKey = getAdminAccount().publicKey;
-    let txParams = await Promise.all(
-        nft_ids.map(id => createTransferCompressedNftInstruction(adminPublicKey, new PublicKey(id)))
-    );
-
+    // let txParams = await Promise.all(
+    //     nft_ids.map(id => createTransferCompressedNftInstruction(adminPublicKey, new PublicKey(id)))
+    // );
     // check if user has SOL
     let balance = await getAddressSOLBalance(isPublicKey, account);
     if(balance < MIN_BALANCE) {
         console.log(`low balance detected, sending some funds to ${account}`);
         await sendSOLTo(isPublicKey, account, MIN_BALANCE);
     }
-    // let tx = new Transaction().add(...txs);
-    return {uuid, adminPublicKey: adminPublicKey.toBase58(), txParams};
+
+    let admin = getAdminAccount();
+
+    // we own this wallet
+    // so we initiate the tx ourselves
+    if(!isPublicKey) {
+
+        let res = await axios.post(
+            "https://api.shyft.to/sol/v1/nft/compressed/transfer_many", 
+            {
+              "network": "mainnet-beta",
+              "nft_addresses": nft_ids,
+              "from_address": address,
+              "to_address": admin.publicKey.toBase58()
+            }, 
+            { 
+              headers: {
+                "Content-Type": "application/json",
+                "x-api-key": "ZsCmQGJe2iK77mzH"
+              },
+            }
+        );
+
+        let txs: Transaction[] = [];
+        res.data.result.encoded_transactions.forEach((t: string) => {
+            let recoveredTransaction = Transaction.from(Buffer.from(t, 'base64'));
+            recoveredTransaction.partialSign(admin);
+        })
+
+        // load the env variables and store the cluster RPC url
+        const CLUSTER_URL = getRPCEndpoint();
+      
+        // create a new rpc connection, using the ReadApi wrapper
+        const connection = new WrapperConnection(CLUSTER_URL);
+
+        for(const tx of txs) {
+            const txnSignature = await connection.sendRawTransaction(
+                tx.serialize()
+            );
+
+            console.log(txnSignature);
+        }
+        console.log('nfts returned');
+
+        // wait 2 seconds before prompting new craft
+        await sleep(2000);
+
+        await newCraft({ uuid });
+    }
+    return {uuid, adminPublicKey: admin.publicKey.toBase58(), /* txParams */};
 }
 
 export const newCraft = async({ uuid }: NewCraftParams) => {
