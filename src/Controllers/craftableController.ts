@@ -41,7 +41,7 @@ export const view = async(id: number) => {
     }
 
     const skills = await craftableSkillController.find({'craftable_id': id});
-    const requirements = await craftableRequirementController.find({'craftable_id': id});
+    const requirements = await craftableRequirementController.getCraftableRequirements(id);
     result.skills = skills;
     result.requirements = requirements;
     return result;
@@ -61,7 +61,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     for(const [index, res] of result.entries()) {
         result[index].skills =  await craftableSkillController.find({'craftable_id': res.id});
-        result[index].requirements = await craftableRequirementController.find({'craftable_id': res.id});
+        console.log(res.id)
+        result[index].requirements = await craftableRequirementController.getCraftableRequirements(res.id);
     }
 
     return result;
@@ -80,7 +81,7 @@ export const list = async() => {
 
     for(const [index, res] of result.entries()) {
         result[index].skills =  await craftableSkillController.find({'craftable_id': res.id});
-        result[index].requirements = await craftableRequirementController.find({'craftable_id': res.id});
+        result[index].requirements = await craftableRequirementController.getCraftableRequirements(res.id);
     }
 
     return result ?? [];

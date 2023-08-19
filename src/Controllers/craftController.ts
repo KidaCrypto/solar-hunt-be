@@ -46,16 +46,12 @@ export const preCraft = async({craftable_id, nft_ids, account, isPublicKey}: Pre
         }
 
         x.requirements.forEach(r => {
-            if(!r.loot) {
-                return;
-            }
-
-            if(!requirements[r.loot[0].name]) {
-                requirements[r.loot[0].name] = 0;
+            if(!requirements[r.name]) {
+                requirements[r.name] = 0;
             }
 
             // get all names
-            requirements[r.loot[0].name] += r.value;
+            requirements[r.name] += r.value;
         })
     });
 

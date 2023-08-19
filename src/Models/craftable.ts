@@ -1,4 +1,4 @@
-import { CraftableRequirement } from "./craftableRequirement";
+import { CraftableRequirementByName } from "./craftableRequirement";
 import { CraftableSkill } from "./craftableSkill";
 
 export type Craftable = {
@@ -6,7 +6,7 @@ export type Craftable = {
     name: string;
     img_file: string;
     skills?: CraftableSkill[];
-    requirements?: CraftableRequirement[];
+    requirements?: CraftableRequirementByName[];
 }
 
 export const fillableColumns = [

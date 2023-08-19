@@ -2,7 +2,7 @@ import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import * as lootController from './lootController';
-import { CraftableRequirement, fillableColumns } from "../Models/craftableRequirement";
+import { CraftableRequirement, CraftableRequirementByName, fillableColumns } from "../Models/craftableRequirement";
 
 const table = 'craftable_requirements';
 
@@ -38,6 +38,25 @@ export const view = async(id: number) => {
 
     result.loot = await lootController.find({ id: result.loot_id });
     return result;
+}
+
+export const getCraftableRequirements = async(id: number) => {
+    const query = `select craftable_id, l.name, min(l.img_file) as img_file, (sum(1))::integer as value
+    from craftable_requirements r
+    join monster_loots l
+    on r.loot_id = l.id
+    where craftable_id = ${id}
+    group by 1,2`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<CraftableRequirementByName>(query);
+
+    if(!result) {
+        return [];
+    }
+
+    return result ?? [];
+
 }
 
 // find (all match)
