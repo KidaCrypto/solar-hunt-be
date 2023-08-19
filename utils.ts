@@ -460,7 +460,7 @@ export const getCraftableCollectionAddress = () => {
 }
 
 export const getPlayerPublicKey = (isPublicKey: boolean, account: string) => {
-    return isPublicKey? new PublicKey(account) : loadOrGenerateKeypair(account).publicKey;
+    return isPublicKey? new PublicKey(account) : loadOrGenerateKeypair(account, '.user_keys').publicKey;
 }
 
 export const getNftDetails = async(rawDetails: ReadApiAsset[]) => {
