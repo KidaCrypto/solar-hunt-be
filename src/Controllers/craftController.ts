@@ -1,4 +1,4 @@
-import { formatDBParamsToStr, generateCraftableImageUrl, generateNftUri, getAddressNftDetails, getAdminAccount, getPlayerPublicKey, getRPCEndpoint } from "../../utils";
+import { formatDBParamsToStr, generateCraftableImageUrl, generateNftUri, getAddressNftDetails, getAddressSOLBalance, getAdminAccount, getPlayerPublicKey, getRPCEndpoint, sendSOLTo } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import * as craftableController from './craftableController';
@@ -25,6 +25,9 @@ export type NewCraftParams = {
 }
 
 const table = 'crafts';
+
+// 0.001 SOL
+const MIN_BALANCE = 0.001;
 
 // init entry for user
 export const init = async() => { }
@@ -94,7 +97,13 @@ export const preCraft = async({craftable_id, nft_ids, account, isPublicKey}: Pre
     let txParams = await Promise.all(
         nft_ids.map(id => createTransferCompressedNftInstruction(adminPublicKey, new PublicKey(id)))
     );
-    
+
+    // check if user has SOL
+    let balance = await getAddressSOLBalance(isPublicKey, account);
+    if(balance < MIN_BALANCE) {
+        console.log(`low balance detected, sending some funds to ${account}`);
+        await sendSOLTo(isPublicKey, account, MIN_BALANCE);
+    }
     // let tx = new Transaction().add(...txs);
     return {uuid, adminPublicKey: adminPublicKey.toBase58(), txParams};
 }

@@ -5,7 +5,7 @@ dotenv.config({ path: path.join(__dirname, '.env')});
 import axios, { AxiosRequestHeaders, AxiosRequestConfig, AxiosResponse } from "axios";
 import crypto from "crypto";
 import DB from './src/DB';
-import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, clusterApiUrl } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadKeypairFromFile, loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
@@ -522,4 +522,41 @@ export const getAddressNftDetails = async(isPublicKey: boolean, account: string)
     ret.craftable = await getNftDetails(rawCraftables);
 
     return ret;
+}
+
+export const getAddressSOLBalance = async(isPublicKey: boolean, account: string) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+    let publicKey = getPlayerPublicKey(isPublicKey, account);
+
+    const result = await connection.getBalance(publicKey);
+    return result / 1000000000;
+}
+
+export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: number) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+    let publicKey = getPlayerPublicKey(isPublicKey, account);
+
+    let lamports = amount * 1000000000;
+
+    let adminAccount = getAdminAccount();
+    let transaction = new Transaction().add(
+        SystemProgram.transfer({
+            fromPubkey: adminAccount.publicKey,
+            toPubkey: publicKey,
+            lamports,
+        })
+    );
+    // Send and confirm transaction
+    // Note: feePayer is by default the first signer, or payer, if the parameter is not set
+    let txSignature = await connection.sendTransaction(transaction, [adminAccount]);
+    console.log(txSignature);
+    return txSignature;
 }
