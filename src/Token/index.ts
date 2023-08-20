@@ -226,8 +226,8 @@ export const transferTo = async(account: string, destinationWallet: PublicKey, w
     transferToInstruction.lastValidBlockHeight = lastValidBlockHeight;
     transferToInstruction.feePayer = playerKeypair.publicKey;
     const transactionId = await sendAndConfirmTransaction(connection,transferToInstruction,[playerKeypair]); 
-    console.log(`Completed Transfer: ${amount} ` + whichToken);
-    console.log(`Transaction ID: `, transactionId);
+    // console.log(`Completed Transfer: ${amount} ` + whichToken);
+    // console.log(`Transaction ID: `, transactionId);
     // console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
     // console.log(`View Transfer: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
 }

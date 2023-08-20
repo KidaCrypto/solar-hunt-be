@@ -136,7 +136,7 @@ export const mintNft = async (nftMintDetails: NftMintDetails) => {
     mintTo,
   );
 
-  console.log('Minted: ' + name);
+  // console.log('Minted: ' + name);
 
   // console.log(`Minted Compressed NFT to ${mintTo.toBase58()}`);
   //////////////////////////////////////////////////////////////////////////////

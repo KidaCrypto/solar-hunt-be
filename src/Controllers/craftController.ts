@@ -97,7 +97,7 @@ export const preCraft = async({craftable_id, nft_ids, account, isPublicKey}: Pre
     // check if user has SOL
     let balance = await getAddressSOLBalance(isPublicKey, account);
     if(balance < MIN_BALANCE) {
-        console.log(`low balance detected, sending some funds to ${account}`);
+        // console.log(`low balance detected, sending some funds to ${account}`);
         await sendSOLTo(isPublicKey, account, MIN_BALANCE);
     }
 

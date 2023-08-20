@@ -61,7 +61,6 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     for(const [index, res] of result.entries()) {
         result[index].skills =  await craftableSkillController.find({'craftable_id': res.id});
-        console.log(res.id)
         result[index].requirements = await craftableRequirementController.getCraftableRequirements(res.id);
     }
 
