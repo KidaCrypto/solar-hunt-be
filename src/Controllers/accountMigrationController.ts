@@ -39,7 +39,10 @@ export const migrate = async(account: string) => {
 
     // transfer all tokens
     await transferAllTo(account, tiplink.keypair.publicKey);
-    await clawbackSOLFrom(account);
+
+    setTimeout(async () => {
+        await clawbackSOLFrom(account);
+    }, 2000);
 
     return tiplinkUrl;
 }

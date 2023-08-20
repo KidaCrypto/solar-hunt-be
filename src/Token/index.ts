@@ -234,7 +234,6 @@ export const transferTo = async(account: string, destinationWallet: PublicKey, w
 
 // account = non public key account
 export const transferAllTo = async(account: string, destinationWallet: PublicKey) => {
-    console.log({account});
     let playerPublicKey =  getPlayerPublicKey(false, account);
     let tokens = await getUserTokens(playerPublicKey);
 
