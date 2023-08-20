@@ -33,16 +33,24 @@ export const migrate = async(account: string) => {
         throw Error("Invalid tiplink key");
     }
 
-    await create({ account, migration_link: tiplinkUrl });
-    await sendSOLTo(false, account, 0.01);
-    await transferCNfts(nftIds, account, tiplinkPubKey);
+    let migration = await create({ account, migration_link: tiplinkUrl });
 
-    // transfer all tokens
-    await transferAllTo(account, tiplink.keypair.publicKey);
+    try {
+        await sendSOLTo(false, account, 0.01);
+        await transferCNfts(nftIds, account, tiplinkPubKey);
+    
+        // transfer all tokens
+        await transferAllTo(account, tiplink.keypair.publicKey);
+    
+        setTimeout(async () => {
+            await clawbackSOLFrom(account);
+        }, 2000);
+    }
 
-    setTimeout(async () => {
-        await clawbackSOLFrom(account);
-    }, 2000);
+    catch {
+        await update(migration.id, { account: account + "_error" });
+        return "";
+    }
 
     return tiplinkUrl;
 }
