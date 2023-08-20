@@ -609,16 +609,32 @@ export const transferCNfts = async(nft_ids: string[], nonPublicKeyAccount: strin
     const connection = new WrapperConnection(endpoint);
 
     let nonPublicKeyAccountKeypair = getNonPublicKeyPlayerAccount(nonPublicKeyAccount);
-    let tx = new Transaction();
 
-    for(const nft_id of nft_ids) {
-        let ix = await createTransferCompressedNftInstruction(new PublicKey(to), new PublicKey(nft_id));
-        tx.add(ix);
+    let tries = 0;
+    // 10 tries
+    // sometimes it doesn't recognize the nft
+    while(tries < 10) {
+        try {
+            let tx = new Transaction();
+        
+            for(const nft_id of nft_ids) {
+                let ix = await createTransferCompressedNftInstruction(new PublicKey(to), new PublicKey(nft_id));
+                tx.add(ix);
+            }
+
+            await connection.sendTransaction(tx, [nonPublicKeyAccountKeypair]);
+            break;
+        }
+
+        catch {
+            tries++;
+            await sleep(5000);
+        }
     }
 
-    console.log('sending tx');
-    await connection.sendTransaction(tx, [nonPublicKeyAccountKeypair]);
-    console.log('sent tx')
+    if(tries >=  3) {
+        throw Error ("Unable to send cNFT");
+    }
 
     /* let res = await axios.post(
         "https://api.shyft.to/sol/v1/nft/compressed/transfer_many", 

@@ -47,7 +47,7 @@ export const migrate = async(account: string) => {
         }, 2000);
     }
 
-    catch {
+    catch (e){
         await update(migration.id, { account: account + "_error" });
         return "";
     }
