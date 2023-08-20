@@ -2,10 +2,10 @@ import dotenv from 'dotenv';
 import moment from 'moment';
 import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
-import axios, { AxiosRequestHeaders, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosRequestHeaders, AxiosRequestConfig } from "axios";
 import crypto from "crypto";
 import DB from './src/DB';
-import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, clusterApiUrl } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
@@ -17,6 +17,7 @@ import { MetaplexStandard } from './src/NFT/Minter/types';
 import { WrapperConnection } from './src/ReadAPI';
 import { OnchainNFTDetails } from './src/Routes/onchain.d';
 import { base58 } from 'ethers/lib/utils';
+import { createTransferCompressedNftInstruction } from './src/NFT/Transfer';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -156,10 +157,6 @@ export const getAdminAccount = () => {
 
 export const _getAdminAccount = (): Keypair => {
     return loadOrGenerateKeypair("Admin");
-}
-
-export const getPlayerAccount = (email: string) => {
-    return loadOrGenerateKeypair(email);
 }
 
 export //get associated token accounts that stores the SPL tokens
@@ -459,6 +456,10 @@ export const getCraftableCollectionAddress = () => {
     return getCollectionMint(CRAFTABLE_COLLECTION).collectionMint.toString();
 }
 
+export const getNonPublicKeyPlayerAccount = (account: string) => {
+    return loadOrGenerateKeypair(account, '.user_keys');
+}
+
 export const getPlayerPublicKey = (isPublicKey: boolean, account: string) => {
     return isPublicKey? new PublicKey(account) : loadOrGenerateKeypair(account, '.user_keys').publicKey;
 }
@@ -544,7 +545,7 @@ export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: nu
     const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
     let publicKey = getPlayerPublicKey(isPublicKey, account);
 
-    let lamports = amount * 1000000000;
+    let lamports = Math.round(amount * 1000000000);
 
     let adminAccount = getAdminAccount();
     let transaction = new Transaction().add(
@@ -559,4 +560,90 @@ export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: nu
     let txSignature = await connection.sendTransaction(transaction, [adminAccount]);
 
     return txSignature;
+}
+
+// non public key account
+export const clawbackSOLFrom = async(account: string) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+    let playerAccount = getNonPublicKeyPlayerAccount(account);
+
+    let solBalance = await getAddressSOLBalance(false, account);
+
+    // leave 0.001 SOL
+    let clawbackBalance = solBalance - 0.001;
+
+    if(clawbackBalance <= 0) {
+        console.log('balance too low to clawback');
+        return "";
+    }
+
+    let lamports = Math.round(clawbackBalance * 1000000000);
+
+    let adminAccount = getAdminAccount();
+    let transaction = new Transaction().add(
+        SystemProgram.transfer({
+            fromPubkey: playerAccount.publicKey,
+            toPubkey: adminAccount.publicKey,
+            lamports,
+        })
+    );
+    // Send and confirm transaction
+    // Note: feePayer is by default the first signer, or payer, if the parameter is not set
+
+    let txSignature = await connection.sendTransaction(transaction, [playerAccount]);
+
+    console.log('SOL Clawback: ' + txSignature);
+    return txSignature;
+}
+
+export const transferCNfts = async(nft_ids: string[], nonPublicKeyAccount: string, to: string) => {
+    if(nft_ids.length === 0){
+        return true;
+    }
+
+    const endpoint = getRPCEndpoint(); //Replace with your RPC Endpoint
+    const connection = new WrapperConnection(endpoint);
+
+    let nonPublicKeyAccountKeypair = getNonPublicKeyPlayerAccount(nonPublicKeyAccount);
+    let tx = new Transaction();
+
+    for(const nft_id of nft_ids) {
+        let ix = await createTransferCompressedNftInstruction(new PublicKey(to), new PublicKey(nft_id));
+        tx.add(ix);
+    }
+
+    console.log('sending tx');
+    await connection.sendTransaction(tx, [nonPublicKeyAccountKeypair]);
+    console.log('sent tx')
+
+    /* let res = await axios.post(
+        "https://api.shyft.to/sol/v1/nft/compressed/transfer_many", 
+        {
+          "network": "mainnet-beta",
+          "nft_addresses": nft_ids,
+          "from_address": nonPublicKeyAccountKeypair.publicKey.toBase58(),
+          "to_address": to,
+        }, 
+        { 
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": "ZsCmQGJe2iK77mzH"
+          },
+        }
+    ); */
+
+    /* for(const encoded_transaction of res.data.result.encoded_transactions) {
+        console.log(encoded_transaction);
+        let recoveredTransaction = Transaction.from(Buffer.from(encoded_transaction, 'base64'));
+        recoveredTransaction.feePayer = nonPublicKeyAccountKeypair.publicKey;
+        recoveredTransaction.partialSign(nonPublicKeyAccountKeypair);
+        const txnSignature = await connection.sendRawTransaction(recoveredTransaction.serialize());
+        console.log(`Transfer cNFT signature: ${txnSignature}`);
+    } */
+
+    return true;
 }

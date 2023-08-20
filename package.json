@@ -26,6 +26,7 @@
     "@solana/spl-account-compression": "^0.1.10",
     "@solana/spl-token": "^0.3.8",
     "@solana/web3.js": "^1.78.4",
+    "@tiplink/api": "^0.1.2",
     "axios": "^0.27.2",
     "body-parser": "^1.20.0",
     "cors": "^2.8.5",

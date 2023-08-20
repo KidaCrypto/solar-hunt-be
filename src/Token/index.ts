@@ -1,8 +1,8 @@
 import { Transaction, SystemProgram, Keypair, Connection, PublicKey, sendAndConfirmTransaction } from "@solana/web3.js";
-import { MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMintInstruction, getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createMintToInstruction } from '@solana/spl-token';
+import { MINT_SIZE, TOKEN_PROGRAM_ID, createInitializeMintInstruction, getMinimumBalanceForRentExemptMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createMintToInstruction, createTransferInstruction } from '@solana/spl-token';
 import { DataV2, createCreateMetadataAccountV3Instruction } from '@metaplex-foundation/mpl-token-metadata';
 import { bundlrStorage, keypairIdentity, Metaplex, UploadMetadataInput } from '@metaplex-foundation/js';
-import { getAdminAccount, getDappDomain, getRPCEndpoint, getTokenAccounts } from "../../utils";
+import { getAdminAccount, getDappDomain, getNonPublicKeyPlayerAccount, getPlayerPublicKey, getRPCEndpoint, getTokenAccounts } from "../../utils";
 import { loadOrGenerateKeypair } from "../Helpers";
 import { EXP_TOKEN, EXP_TOKEN_DECIMALS, EXP_TOKEN_SYMBOL, GOLD_TOKEN, GOLD_TOKEN_DECIMALS, GOLD_TOKEN_SYMBOL } from "../Constants";
 
@@ -133,6 +133,40 @@ const createNewMintToInstruction = async (destinationWallet: PublicKey, whichTok
     return mintNewTokenInstruction;
 }
 
+const createNewTransferToInstruction = async (fromWallet: Keypair, destinationWallet: PublicKey, whichToken: "gold" | "exp", amount: number)=>{
+    const mintKeypair = loadOrGenerateKeypair(whichToken);
+    const decimals = whichToken === "gold"? GOLD_TOKEN_DECIMALS : EXP_TOKEN_DECIMALS;
+    
+    // console.log(`---STEP 1: Get Associated Address---`);
+    //get associated token account of your wallet
+    const fromTokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, fromWallet.publicKey);
+    const tokenATA = await getAssociatedTokenAddress(mintKeypair.publicKey, destinationWallet);
+    const mintObject = await getUserTokens(destinationWallet);
+    let shouldCreateNewATA = !Object.keys(mintObject).includes(mintKeypair.publicKey.toBase58()); 
+
+    const transferTokenInstruction = new Transaction();
+    if(shouldCreateNewATA) {
+        transferTokenInstruction.add(
+            createAssociatedTokenAccountInstruction(
+              fromWallet.publicKey, //Payer 
+              tokenATA, //Associated token account 
+              destinationWallet, //token owner
+              mintKeypair.publicKey, //Mint
+            ),
+        );
+    }
+    transferTokenInstruction.add(
+        createTransferInstruction(
+            fromTokenATA, //From Token Account
+            tokenATA, //Destination Token Account
+            fromWallet.publicKey, //Owner
+            Math.round(amount * Math.pow(10, decimals)),//number of tokens
+        ),
+    );
+
+    return transferTokenInstruction;
+}
+
 export const initializeToken = async(whichToken: "gold" | "exp") => {
     const newMintTransaction:Transaction = await createNewMintTransaction(whichToken);
     const mintKeypair = loadOrGenerateKeypair(whichToken);
@@ -152,9 +186,9 @@ export const getTokenPublicKey = (whichToken: "gold" | "exp") => {
     return loadOrGenerateKeypair(whichToken).publicKey.toBase58();
 }
 
-export const getUserTokens = async(destinationWallet: PublicKey) => {
+export const getUserTokens = async(userAccount: PublicKey) => {
     let mintObject: {[mintAddress: string]: number} = {};
-    let userAccounts = await getTokenAccounts(connection, destinationWallet.toString());
+    let userAccounts = await getTokenAccounts(connection, userAccount.toString());
     for(let account of userAccounts) {
       let anyAccount = account.account as any;
       let mint: string = anyAccount.data["parsed"]["info"]["mint"];
@@ -180,4 +214,39 @@ export const mintTo = async(destinationWallet: PublicKey, whichToken: "gold" | "
     // console.log(`Transaction ID: `, transactionId);
     // console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
     // console.log(`View Token Mint: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
+}
+
+// account = non public key account
+export const transferTo = async(account: string, destinationWallet: PublicKey, whichToken: "gold" | "exp", amount: number) => {
+    const playerKeypair = getNonPublicKeyPlayerAccount(account);
+    const transferToInstruction:Transaction = await createNewTransferToInstruction(playerKeypair, destinationWallet, whichToken, amount);
+
+    let { lastValidBlockHeight, blockhash } = await connection.getLatestBlockhash('finalized');
+    transferToInstruction.recentBlockhash = blockhash;
+    transferToInstruction.lastValidBlockHeight = lastValidBlockHeight;
+    transferToInstruction.feePayer = playerKeypair.publicKey;
+    const transactionId = await sendAndConfirmTransaction(connection,transferToInstruction,[playerKeypair]); 
+    console.log(`Completed Transfer: ${amount} ` + whichToken);
+    console.log(`Transaction ID: `, transactionId);
+    // console.log(`View Transaction: https://explorer.solana.com/tx/${transactionId}?cluster=devnet`);
+    // console.log(`View Transfer: https://explorer.solana.com/address/${mintKeypair.publicKey.toString()}?cluster=devnet`)
+}
+
+// account = non public key account
+export const transferAllTo = async(account: string, destinationWallet: PublicKey) => {
+    console.log({account});
+    let playerPublicKey =  getPlayerPublicKey(false, account);
+    let tokens = await getUserTokens(playerPublicKey);
+
+    let goldMintAddress = getTokenPublicKey("gold");
+    let expMintAddress = getTokenPublicKey("exp");
+
+    if(tokens[goldMintAddress]) {
+        await transferTo(account, destinationWallet, "gold", tokens[goldMintAddress]);
+    }
+    if(tokens[expMintAddress]) {
+        await transferTo(account, destinationWallet, "exp", tokens[expMintAddress]);
+    }
+
+    return true;
 }

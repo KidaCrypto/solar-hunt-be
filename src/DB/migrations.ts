@@ -141,4 +141,19 @@ export default [
         query: `CREATE INDEX crafting_uuids_index ON crafting_uuids (uuid)`,
         rollback_query: `DROP INDEX crafting_uuids_index;`
     },
+    {
+        name: "create_account_migrations_table",
+        query: `
+            CREATE TABLE account_migrations (
+                id serial PRIMARY KEY,
+                account text not null,
+                migration_link text not null
+            );`,
+        rollback_query: `DROP TABLE account_migrations;`
+    },
+    {
+        name: "create_account_migrations_index",
+        query: `CREATE INDEX account_migrations_index ON account_migrations (account)`,
+        rollback_query: `DROP INDEX account_migrations_index;`
+    },
 ];

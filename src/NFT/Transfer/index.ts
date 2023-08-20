@@ -42,13 +42,13 @@ export const createTransferCompressedNftInstruction = async (to: PublicKey, asse
     /**
      * Get the asset details from the RPC
      */
-    printConsoleSeparator("Get the asset details from the RPC");
+    // printConsoleSeparator("Get the asset details from the RPC");
   
     const asset = await connection.getAsset(assetId);
   
-    console.log("Is this a compressed NFT?", asset.compression.compressed);
-    console.log("Current owner:", asset.ownership.owner);
-    console.log("Current delegate:", asset.ownership.delegate);
+    // console.log("Is this a compressed NFT?", asset.compression.compressed);
+    // console.log("Current owner:", asset.ownership.owner);
+    // console.log("Current delegate:", asset.ownership.delegate);
   
     // ensure the current asset is actually a compressed NFT
     if (!asset.compression.compressed) {
@@ -62,11 +62,11 @@ export const createTransferCompressedNftInstruction = async (to: PublicKey, asse
      * Get the asset's proof from the RPC
      */
   
-    printConsoleSeparator("Get the asset proof from the RPC");
+    // printConsoleSeparator("Get the asset proof from the RPC");
   
     const assetProof = await connection.getAssetProof(assetId);
   
-    console.log(assetProof);
+    // console.log(assetProof);
   
     /**
      * Get the tree's current on-chain account data
@@ -74,7 +74,7 @@ export const createTransferCompressedNftInstruction = async (to: PublicKey, asse
   
     // parse the tree's address from the `asset`
     const treeAddress = new PublicKey(asset.compression.tree);
-    console.log("Tree address:", treeAddress.toBase58());
+    // console.log("Tree address:", treeAddress.toBase58());
   
     // get the tree's account info from the cluster
     const treeAccount = await ConcurrentMerkleTreeAccount.fromAccountAddress(connection, treeAddress);
@@ -87,7 +87,7 @@ export const createTransferCompressedNftInstruction = async (to: PublicKey, asse
      * The actual proof validation is performed on-chain.
      */
   
-    printConsoleSeparator("Validate the RPC provided asset proof on the client side:");
+    // printConsoleSeparator("Validate the RPC provided asset proof on the client side:");
   
     const merkleTreeProof: MerkleTreeProof = {
       leafIndex: asset.compression.leaf_id,
@@ -99,15 +99,15 @@ export const createTransferCompressedNftInstruction = async (to: PublicKey, asse
     const currentRoot = treeAccount.getCurrentRoot();
     const rpcRoot = new PublicKey(assetProof.root).toBuffer();
   
-    console.log(
-      "Is RPC provided proof/root valid:",
-      MerkleTree.verify(rpcRoot, merkleTreeProof, false),
-    );
+    // console.log(
+    //   "Is RPC provided proof/root valid:",
+    //   MerkleTree.verify(rpcRoot, merkleTreeProof, false),
+    // );
   
-    console.log(
-      "Does the current on-chain root match RPC provided root:",
-      new PublicKey(currentRoot).toBase58() === new PublicKey(rpcRoot).toBase58(),
-    );
+    // console.log(
+    //   "Does the current on-chain root match RPC provided root:",
+    //   new PublicKey(currentRoot).toBase58() === new PublicKey(rpcRoot).toBase58(),
+    // );
   
     /**
      * INFO:
@@ -204,7 +204,7 @@ export const createTransferCompressedNftInstruction = async (to: PublicKey, asse
         },
         BUBBLEGUM_PROGRAM_ID.toBase58()
     ]); */
-    return [
+    /* return [
         {
             merkleTree: treeAddress.toBase58(),
             treeAuthority: treeAuthority.toBase58(),
@@ -222,5 +222,6 @@ export const createTransferCompressedNftInstruction = async (to: PublicKey, asse
             index: asset.compression.leaf_id,
         },
         BUBBLEGUM_PROGRAM_ID.toBase58()
-    ];
+    ]; */
+    return transferIx;
 }
