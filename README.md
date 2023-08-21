@@ -1,5 +1,5 @@
-# Backend for Metrics DAO bot
-The code here manages all data related stuff for the Metrics DAO Golden Ticket Bot.
+# Backend for Solar Hunt
+The code here manages all data related stuff for the Solar Hunt app.
 
 ## How to run locally
 
@@ -10,36 +10,8 @@ The code here manages all data related stuff for the Metrics DAO Golden Ticket B
 5. Fill up .env, where DB_HOST=localhost, CORS_WHITELIST is unsused can be left as an empty array
 6. Run `npm install`.
 7. Install `typescript` if you haven't.
-8. Under `./src/Seeders/index.ts`, edit the values for seed admins. More info in the actual code.
+8. Under `./src/Seeders/index.ts`, edit the values. More info in the actual code.
 9. Run `npm run migrate:seed`.
-10. Run `npm restart`.
-11. Any changes to the code should be restarted with `npm restart`.
+10. To Run the backend, use `npm run dev`. (nodemon should be installed)
 
-## How to deploy
-
-1. Setup a Discord Bot (https://www.upwork.com/resources/how-to-make-discord-bot)
-2. Get its token, you'll need this later.
-3. Setup a Linux server with postgresql 14, supervisord, and node 16 installed.
-4. Do steps 2 - 9 in `How to run locally`.
-5. Setup supervisord
-
-Sample .ini file
-
-```
-[program:metrics_dao_be]
-directory=/var/www/html/discord_bot_be
-command=node --experimental-modules index.js
-process_name=%(program_name)s_%(process_num)02d
-numprocs=1
-priority=999
-autostart=true
-autorestart=true
-startsecs=1
-startretries=3
-user=apache
-stdout_logfile=/var/log/mbot_be.log
-stderr_logfile=/var/log/mbot_be_error.log
-redirect_stderr=true
-```
-
-6. Run supervisord.
+More info in https://twitter.com/darksoulsfanlol/status/1693283532817432948 and https://www.cubik.so/project/62d152fa-d58c-42cc-b731-05420ab799b1/hackathon/8e23ade0-0dae-4c4b-83aa-67867749029c
